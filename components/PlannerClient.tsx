@@ -1,0 +1,99 @@
+'use client'
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { generateMenuAction } from "@/app/actions/menu-actions";
+import { WeeklyPlan, DayMenu, ShoppingItem } from "@/types/weekly-plan";
+import { Loader2, CheckCircle2 } from "lucide-react";
+
+export default function PlannerClient() {
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
+
+  async function handleGenerate() {
+    setLoading(true);
+    const result = await generateMenuAction(notes);
+    if (result.success && result.plan) {
+      // In a real app we might fetch the latest plan or use the returned one
+      // The DB stores it as Json, we cast it here for UI
+      setPlan({
+        weekly_menu: result.plan.menu_data as DayMenu[],
+        shopping_list: result.plan.shopping_list as ShoppingItem[],
+        summary_note: "Menu generato con successo!", // summary_note is not in DB schema but in AI output, let's fix action later if needed
+      } as WeeklyPlan);
+    } else {
+      alert("Errore: " + result.error);
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Generatore Menu</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea 
+            placeholder="Esempio: Venerdì ho ospiti a cena, evita il piccante..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <Button onClick={handleGenerate} disabled={loading} className="w-full">
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generazione in corso...</> : "Genera Menu Settimanale"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {plan && (
+        <div className="space-y-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {plan.weekly_menu.map((day) => (
+              <Card key={day.day}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{day.day}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                  <div>
+                    <span className="font-semibold">Pranzo:</span> {day.lunch}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Cena:</span> {day.dinner}
+                  </div>
+                  {day.ingredients_used_from_pantry.length > 0 && (
+                    <div className="text-xs text-green-600 flex items-start gap-1">
+                      <CheckCircle2 className="h-3 w-3 mt-0.5" />
+                      Usa: {day.ingredients_used_from_pantry.join(', ')}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista della Spesa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid md:grid-cols-2 gap-2">
+                {plan.shopping_list.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2 border-b pb-1">
+                    <input type="checkbox" className="h-4 w-4" />
+                    <span className="flex-1">
+                      <span className="font-medium">{item.item}</span> ({item.quantity})
+                    </span>
+                    <span className="text-xs text-muted-foreground italic">{item.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
