@@ -21,16 +21,17 @@ export function ImportRecipesModal() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const form = event.currentTarget
     setIsUploading(true)
     setStatus(null)
 
-    const formData = new FormData(event.currentTarget)
+    const formData = new FormData(form)
     const result = await importRecipesAction(formData)
 
     setIsUploading(false)
     if (result.success) {
       setStatus({ success: true, message: `Importate ${result.count} ricette con successo!` })
-      event.currentTarget.reset()
+      form.reset()
       // Chiudiamo la modale dopo un breve delay in caso di successo? 
       // O lasciamo il messaggio di successo visibile. 
       // Per ora la teniamo aperta per mostrare il messaggio.

@@ -156,8 +156,24 @@ export async function importRecipesAction(formData: FormData) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-      if (!parts || parts.length < 2) continue;
+      // Gestione migliore del CSV con campi virgolettati
+      const parts: string[] = [];
+      let currentPart = '';
+      let inQuotes = false;
+      for (let charIndex = 0; charIndex < line.length; charIndex++) {
+        const char = line[charIndex];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          parts.push(currentPart.trim());
+          currentPart = '';
+        } else {
+          currentPart += char;
+        }
+      }
+      parts.push(currentPart.trim());
+
+      if (parts.length < 2) continue;
 
       const name = parts[0].replace(/^"|"$/g, '').trim();
       const ingredientsRaw = parts[1].replace(/^"|"$/g, '').trim();
@@ -170,7 +186,7 @@ export async function importRecipesAction(formData: FormData) {
     }
 
     if (recipesToInsert.length > 0) {
-      const { error } = await (supabase.from('recipes') as any).upsert(recipesToInsert, { onConflict: 'name' });
+      const { error } = await supabase.from('recipes').upsert(recipesToInsert, { onConflict: 'name' });
       if (error) throw error;
     }
 
@@ -198,8 +214,24 @@ export async function importPantryItemsAction(formData: FormData) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-      if (!parts || parts.length < 1) continue;
+      // Gestione migliore del CSV con campi virgolettati
+      const parts: string[] = [];
+      let currentPart = '';
+      let inQuotes = false;
+      for (let charIndex = 0; charIndex < line.length; charIndex++) {
+        const char = line[charIndex];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          parts.push(currentPart.trim());
+          currentPart = '';
+        } else {
+          currentPart += char;
+        }
+      }
+      parts.push(currentPart.trim());
+
+      if (parts.length < 1) continue;
 
       const name = parts[0].replace(/^"|"$/g, '').trim();
       const quantity = parts[1] ? parts[1].replace(/^"|"$/g, '').trim() : "";
@@ -209,7 +241,7 @@ export async function importPantryItemsAction(formData: FormData) {
     }
 
     if (itemsToInsert.length > 0) {
-      const { error } = await (supabase.from('pantry_items') as any).upsert(itemsToInsert, { onConflict: 'name' });
+      const { error } = await supabase.from('pantry_items').upsert(itemsToInsert, { onConflict: 'name' });
       if (error) throw error;
     }
 

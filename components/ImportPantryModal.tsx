@@ -21,16 +21,17 @@ export function ImportPantryModal() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const form = event.currentTarget
     setIsUploading(true)
     setStatus(null)
 
-    const formData = new FormData(event.currentTarget)
+    const formData = new FormData(form)
     const result = await importPantryItemsAction(formData)
 
     setIsUploading(false)
     if (result.success) {
       setStatus({ success: true, message: `Importati ${result.count} ingredienti con successo!` })
-      event.currentTarget.reset()
+      form.reset()
       setTimeout(() => {
         setOpen(false)
         setStatus(null)
