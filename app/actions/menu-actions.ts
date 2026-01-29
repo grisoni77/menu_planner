@@ -69,43 +69,71 @@ export async function generateMenuAction(extraNotes: string) {
 }
 
 export async function addPantryItemAction(formData: FormData) {
-  const name = formData.get('name') as string;
+  const name = (formData.get('name') as string).trim();
   const quantity = formData.get('quantity') as string;
   const category = formData.get('category') as string;
 
-  await (supabase.from('pantry_items') as any).insert({ name, quantity, category } as any);
+  const { error } = await (supabase.from('pantry_items') as any).insert({ name, quantity, category } as any);
+  if (error && error.code === '23505') {
+    return { success: false, error: "Un ingrediente con questo nome esiste già." };
+  }
+  revalidatePath('/dashboard');
   revalidatePath('/');
+  return { success: true };
+}
+
+export async function updatePantryItemAction(id: string, formData: FormData) {
+  const name = (formData.get('name') as string).trim();
+  const quantity = formData.get('quantity') as string;
+  const category = formData.get('category') as string;
+
+  const { error } = await (supabase.from('pantry_items') as any).update({ name, quantity, category } as any).eq('id', id);
+  if (error && error.code === '23505') {
+    return { success: false, error: "Un ingrediente con questo nome esiste già." };
+  }
+  revalidatePath('/dashboard');
+  revalidatePath('/');
+  return { success: true };
 }
 
 export async function deletePantryItemAction(id: string) {
   await supabase.from('pantry_items').delete().eq('id', id);
+  revalidatePath('/dashboard');
   revalidatePath('/');
 }
 
 export async function addRecipeAction(formData: FormData) {
-    const name = formData.get('name') as string;
+    const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
     
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    await (supabase.from('recipes') as any).insert({ name, ingredients, tags } as any);
+    const { error } = await (supabase.from('recipes') as any).insert({ name, ingredients, tags } as any);
+    if (error && error.code === '23505') {
+      return { success: false, error: "Una ricetta con questo nome esiste già." };
+    }
     revalidatePath('/dashboard');
     revalidatePath('/');
+    return { success: true };
 }
 
 export async function updateRecipeAction(id: string, formData: FormData) {
-    const name = formData.get('name') as string;
+    const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
     
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    await (supabase.from('recipes') as any).update({ name, ingredients, tags } as any).eq('id', id);
+    const { error } = await (supabase.from('recipes') as any).update({ name, ingredients, tags } as any).eq('id', id);
+    if (error && error.code === '23505') {
+      return { success: false, error: "Una ricetta con questo nome esiste già." };
+    }
     revalidatePath('/dashboard');
     revalidatePath('/');
+    return { success: true };
 }
 
 export async function deleteRecipeAction(id: string) {
@@ -122,17 +150,12 @@ export async function importRecipesAction(formData: FormData) {
     const content = await file.text();
     const lines = content.split('\n');
     
-    // Assumiamo che la prima riga sia l'header: nome,ingredienti,tag
-    // Esempio: Carbonara,"pasta, uova, guanciale, pecorino","primo, veloce"
-    
     const recipesToInsert = [];
     
-    // Semplice parser CSV (gestisce virgole e citazioni base)
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Regex per dividere CSV gestendo i doppi apici
       const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
       if (!parts || parts.length < 2) continue;
 
@@ -147,7 +170,7 @@ export async function importRecipesAction(formData: FormData) {
     }
 
     if (recipesToInsert.length > 0) {
-      const { error } = await (supabase.from('recipes') as any).insert(recipesToInsert);
+      const { error } = await (supabase.from('recipes') as any).upsert(recipesToInsert, { onConflict: 'name' });
       if (error) throw error;
     }
 
@@ -156,6 +179,45 @@ export async function importRecipesAction(formData: FormData) {
     return { success: true, count: recipesToInsert.length };
   } catch (error) {
     console.error("Errore durante l'importazione CSV:", error);
+    return { success: false, error: "Errore durante l'elaborazione del file CSV" };
+  }
+}
+
+export async function importPantryItemsAction(formData: FormData) {
+  const file = formData.get('file') as File;
+  if (!file) return { success: false, error: "Nessun file fornito" };
+
+  try {
+    const content = await file.text();
+    const lines = content.split('\n');
+    
+    const itemsToInsert = [];
+    
+    // Header: nome,quantità,categoria
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      if (!parts || parts.length < 1) continue;
+
+      const name = parts[0].replace(/^"|"$/g, '').trim();
+      const quantity = parts[1] ? parts[1].replace(/^"|"$/g, '').trim() : "";
+      const category = parts[2] ? parts[2].replace(/^"|"$/g, '').trim() : "";
+
+      itemsToInsert.push({ name, quantity, category });
+    }
+
+    if (itemsToInsert.length > 0) {
+      const { error } = await (supabase.from('pantry_items') as any).upsert(itemsToInsert, { onConflict: 'name' });
+      if (error) throw error;
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/');
+    return { success: true, count: itemsToInsert.length };
+  } catch (error) {
+    console.error("Errore durante l'importazione CSV dispensa:", error);
     return { success: false, error: "Errore durante l'elaborazione del file CSV" };
   }
 }
