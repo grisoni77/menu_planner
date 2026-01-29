@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPantryItemAction, deletePantryItemAction, deleteRecipeAction } from "@/app/actions/menu-actions";
 import { Trash2 } from "lucide-react";
-import { ImportRecipesForm } from "@/components/ImportRecipesForm";
+import { ImportRecipesModal } from "@/components/ImportRecipesModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecipeFormModal } from "@/components/RecipeFormModal";
 
@@ -55,11 +55,12 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Le mie Ricette</CardTitle>
-              <RecipeFormModal />
+              <div className="flex gap-2">
+                <ImportRecipesModal />
+                <RecipeFormModal />
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ImportRecipesForm />
-
               <ul className="divide-y mt-4">
                 {recipes?.map((recipe: any) => (
                   <li key={recipe.id} className="py-3 flex justify-between items-center">
