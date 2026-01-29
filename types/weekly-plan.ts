@@ -6,10 +6,16 @@ export const ShoppingItemSchema = z.object({
   reason: z.string().describe("Per quale ricetta serve"),
 });
 
+export const MealSchema = z.object({
+  vegetables: z.string().describe("Componente verdura (50%)"),
+  carbs: z.string().describe("Componente carboidrati (30%)"),
+  proteins: z.string().describe("Componente proteine (20%)"),
+});
+
 export const DayMenuSchema = z.object({
   day: z.enum(["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]),
-  lunch: z.string().describe("Nome della ricetta scelta dal DB o idea semplice"),
-  dinner: z.string().describe("Nome della ricetta scelta dal DB o idea semplice"),
+  lunch: z.union([z.string(), MealSchema]),
+  dinner: z.union([z.string(), MealSchema]),
   ingredients_used_from_pantry: z.array(z.string()),
 });
 

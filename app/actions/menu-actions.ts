@@ -22,8 +22,16 @@ export async function generateMenuAction(extraNotes: string) {
     const lastMenuContext = lastPlan ? JSON.stringify(lastPlan.menu_data) : 'Nessun menu precedente disponibile';
 
     const prompt = `
-      Sei un assistente esperto nella pianificazione di menu settimanali.
+      Sei un assistente esperto nella pianificazione di menu settimanali salutari e bilanciati.
       Il tuo obiettivo è creare un menu per la settimana (7 giorni, pranzo e cena) ottimizzando l'uso degli ingredienti già presenti in dispensa.
+
+      IMPORTANTE - STRUTTURA DEL PASTO:
+      Ogni singolo pasto (sia pranzo che cena) deve essere composto da tre componenti specifiche rispettando queste proporzioni:
+      1. Verdure (50% del piatto)
+      2. Carboidrati (30% del piatto)
+      3. Proteine (20% del piatto)
+
+      Assicurati che per ogni pasto tu fornisca esplicitamente cosa mangiare per ciascuna di queste tre categorie.
 
       DISPENSA ATTUALE:
       ${pantryContext}
@@ -38,7 +46,7 @@ export async function generateMenuAction(extraNotes: string) {
       ${extraNotes}
 
       ISTRUZIONI:
-      1. Dai la priorità alle RICETTE DISPONIBILI nel database se gli ingredienti sono in gran parte presenti in dispensa.
+      1. Dai la priorità alle RICETTE DISPONIBILI nel database se gli ingredienti sono in gran parte presenti in dispensa. Se una ricetta del database è un piatto unico, scomponilo o integralo per rispettare la suddivisione Verdure/Carboidrati/Proteine.
       2. Se non ci sono abbastanza ricette nel database o per variare, inventa piatti semplici coerenti con la dispensa.
       3. Se mancano ingredienti per una ricetta che hai scelto, aggiungili alla shopping_list.
       4. Sii preciso sulle quantità.
