@@ -39,12 +39,42 @@ export default async function HistoryPage() {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg">{day.day}</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm space-y-2">
+                    <CardContent className="text-sm space-y-4">
                       <div>
-                        <span className="font-semibold">Pranzo:</span> {day.lunch}
+                        <span className="font-bold block border-b mb-1">Pranzo:</span>
+                        <ul className="space-y-1">
+                          <li className="text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs">
+                            <span className="font-semibold">Verdure:</span> {typeof day.lunch === 'string' ? day.lunch : day.lunch.vegetables}
+                          </li>
+                          {typeof day.lunch !== 'string' && (
+                            <>
+                              <li className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs">
+                                <span className="font-semibold">Carboidrati:</span> {day.lunch.carbs}
+                              </li>
+                              <li className="text-red-700 bg-red-50 px-2 py-0.5 rounded text-xs">
+                                <span className="font-semibold">Proteine:</span> {day.lunch.proteins}
+                              </li>
+                            </>
+                          )}
+                        </ul>
                       </div>
                       <div>
-                        <span className="font-semibold">Cena:</span> {day.dinner}
+                        <span className="font-bold block border-b mb-1">Cena:</span>
+                        <ul className="space-y-1">
+                          <li className="text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs">
+                            <span className="font-semibold">Verdure:</span> {typeof day.dinner === 'string' ? day.dinner : day.dinner.vegetables}
+                          </li>
+                          {typeof day.dinner !== 'string' && (
+                            <>
+                              <li className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs">
+                                <span className="font-semibold">Carboidrati:</span> {day.dinner.carbs}
+                              </li>
+                              <li className="text-red-700 bg-red-50 px-2 py-0.5 rounded text-xs">
+                                <span className="font-semibold">Proteine:</span> {day.dinner.proteins}
+                              </li>
+                            </>
+                          )}
+                        </ul>
                       </div>
                       {day.ingredients_used_from_pantry.length > 0 && (
                         <div className="text-xs text-green-600 flex items-start gap-1">
