@@ -1,16 +1,18 @@
 'use client'
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { RecipeCard } from "@/components/RecipeCard"
 import { PantryItemCard } from "@/components/PantryItemCard"
 import { RecipeFormModal } from "@/components/RecipeFormModal"
 import { ImportRecipesModal } from "@/components/ImportRecipesModal"
 import { PantryItemFormModal } from "@/components/PantryItemFormModal"
 import { ImportPantryModal } from "@/components/ImportPantryModal"
+import { Badge } from "@/components/ui/badge"
 
 interface DashboardClientProps {
   initialPantryItems: any[]
@@ -20,12 +22,26 @@ interface DashboardClientProps {
 export function DashboardClient({ initialPantryItems, initialRecipes }: DashboardClientProps) {
   const [recipeSearch, setRecipeSearch] = useState("")
   const [pantrySearch, setPantrySearch] = useState("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag) 
+        : [...prev, tag]
+    )
+  }
 
   const filteredRecipes = initialRecipes.filter(recipe => {
     const search = recipeSearch.toLowerCase()
     const nameMatch = recipe.name.toLowerCase().includes(search)
-    const tagMatch = recipe.tags?.some((tag: string) => tag.toLowerCase().includes(search))
-    return nameMatch || tagMatch
+    
+    // Il testo nel campo ricerca attiva la ricerca SOLO sul nome (come da richiesta)
+    // Se ci sono tag selezionati, la ricetta deve averli TUTTI
+    const tagsMatch = selectedTags.length === 0 || 
+      selectedTags.every(tag => recipe.tags?.includes(tag))
+
+    return nameMatch && tagsMatch
   })
 
   const filteredPantry = initialPantryItems.filter(item => {
@@ -98,9 +114,37 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
               </div>
             </CardHeader>
             <CardContent>
+              {selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedTags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                      {tag}
+                      <button 
+                        onClick={() => toggleTag(tag)}
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedTags([])}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Svuota filtri
+                  </Button>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
+                  <RecipeCard 
+                    key={recipe.id} 
+                    recipe={recipe} 
+                    onTagClick={toggleTag}
+                    selectedTags={selectedTags}
+                  />
                 ))}
               </div>
               {filteredRecipes.length === 0 && (
