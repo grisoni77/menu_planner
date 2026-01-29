@@ -93,3 +93,49 @@ export async function addRecipeAction(formData: FormData) {
     await (supabase.from('recipes') as any).insert({ name, ingredients, tags } as any);
     revalidatePath('/');
 }
+
+export async function importRecipesAction(formData: FormData) {
+  const file = formData.get('file') as File;
+  if (!file) return { success: false, error: "Nessun file fornito" };
+
+  try {
+    const content = await file.text();
+    const lines = content.split('\n');
+    
+    // Assumiamo che la prima riga sia l'header: nome,ingredienti,tag
+    // Esempio: Carbonara,"pasta, uova, guanciale, pecorino","primo, veloce"
+    
+    const recipesToInsert = [];
+    
+    // Semplice parser CSV (gestisce virgole e citazioni base)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      // Regex per dividere CSV gestendo i doppi apici
+      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      if (!parts || parts.length < 2) continue;
+
+      const name = parts[0].replace(/^"|"$/g, '').trim();
+      const ingredientsRaw = parts[1].replace(/^"|"$/g, '').trim();
+      const tagsRaw = parts[2] ? parts[2].replace(/^"|"$/g, '').trim() : "";
+
+      const ingredients = ingredientsRaw.split(/[;,]/).map(ing => ({ name: ing.trim() })).filter(ing => ing.name);
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+
+      recipesToInsert.push({ name, ingredients, tags });
+    }
+
+    if (recipesToInsert.length > 0) {
+      const { error } = await (supabase.from('recipes') as any).insert(recipesToInsert);
+      if (error) throw error;
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/');
+    return { success: true, count: recipesToInsert.length };
+  } catch (error) {
+    console.error("Errore durante l'importazione CSV:", error);
+    return { success: false, error: "Errore durante l'elaborazione del file CSV" };
+  }
+}

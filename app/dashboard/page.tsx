@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPantryItemAction, deletePantryItemAction, addRecipeAction } from "@/app/actions/menu-actions";
 import { Trash2 } from "lucide-react";
+import { ImportRecipesForm } from "@/components/ImportRecipesForm";
 
 export default async function DashboardPage() {
   const { data: pantryItems } = await supabase.from('pantry_items').select('*').order('name');
@@ -54,6 +55,8 @@ export default async function DashboardPage() {
               <Input name="tags" placeholder="Tag (separati da virgola)" />
               <Button type="submit" className="w-full">Salva Ricetta</Button>
             </form>
+
+            <ImportRecipesForm />
 
             <ul className="divide-y">
               {recipes?.map((recipe: any) => (
