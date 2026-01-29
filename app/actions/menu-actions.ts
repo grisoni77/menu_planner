@@ -10,10 +10,16 @@ export async function generateMenuAction(extraNotes: string) {
     // 1. Data Fetching
     const { data: pantryItems } = await supabase.from('pantry_items').select('*');
     const { data: recipes } = await supabase.from('recipes').select('*');
+    const { data: lastPlan } = await (supabase.from('weekly_plans') as any)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
     // 2. Context Assembly
     const pantryContext = pantryItems?.map((item: any) => `${item.name} (${item.quantity})`).join(', ') || 'Vuota';
     const recipesContext = recipes?.map((r: any) => `${r.name}: ${JSON.stringify(r.ingredients)}`).join('\n') || 'Nessuna ricetta salvata';
+    const lastMenuContext = lastPlan ? JSON.stringify(lastPlan.menu_data) : 'Nessun menu precedente disponibile';
 
     const prompt = `
       Sei un assistente esperto nella pianificazione di menu settimanali.
@@ -25,6 +31,9 @@ export async function generateMenuAction(extraNotes: string) {
       RICETTE DISPONIBILI NEL DATABASE:
       ${recipesContext}
 
+      MENU DELLA SETTIMANA PRECEDENTE (EVITA DI RIPETERE GLI STESSI PIATTI):
+      ${lastMenuContext}
+
       NOTE EXTRA DALL'UTENTE:
       ${extraNotes}
 
@@ -33,7 +42,8 @@ export async function generateMenuAction(extraNotes: string) {
       2. Se non ci sono abbastanza ricette nel database o per variare, inventa piatti semplici coerenti con la dispensa.
       3. Se mancano ingredienti per una ricetta che hai scelto, aggiungili alla shopping_list.
       4. Sii preciso sulle quantità.
-      5. Rispondi in Italiano.
+      5. CERCA DI VARIARE rispetto al menu della settimana precedente fornito.
+      6. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output
@@ -252,4 +262,18 @@ export async function importPantryItemsAction(formData: FormData) {
     console.error("Errore durante l'importazione CSV dispensa:", error);
     return { success: false, error: "Errore durante l'elaborazione del file CSV" };
   }
+}
+
+export async function getWeeklyPlansAction() {
+  const { data, error } = await supabase
+    .from('weekly_plans')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Errore nel recupero dello storico:", error);
+    return { success: false, error: "Impossibile recuperare lo storico" };
+  }
+
+  return { success: true, plans: data };
 }
