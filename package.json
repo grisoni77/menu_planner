@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+	"gen:types": "supabase gen types typescript --local > types/supabase.ts"
   },
   "dependencies": {
     "@langchain/core": "^1.1.17",
