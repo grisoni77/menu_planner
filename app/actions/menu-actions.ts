@@ -87,10 +87,30 @@ export async function addRecipeAction(formData: FormData) {
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
     
-    const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() }));
-    const tags = tagsRaw.split(',').map(t => t.trim());
+    const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
     await (supabase.from('recipes') as any).insert({ name, ingredients, tags } as any);
+    revalidatePath('/dashboard');
+    revalidatePath('/');
+}
+
+export async function updateRecipeAction(id: string, formData: FormData) {
+    const name = formData.get('name') as string;
+    const ingredientsRaw = formData.get('ingredients') as string;
+    const tagsRaw = formData.get('tags') as string;
+    
+    const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
+
+    await (supabase.from('recipes') as any).update({ name, ingredients, tags } as any).eq('id', id);
+    revalidatePath('/dashboard');
+    revalidatePath('/');
+}
+
+export async function deleteRecipeAction(id: string) {
+    await supabase.from('recipes').delete().eq('id', id);
+    revalidatePath('/dashboard');
     revalidatePath('/');
 }
 
