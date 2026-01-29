@@ -13,9 +13,11 @@ interface RecipeCardProps {
     ingredients: { name: string }[]
     tags: string[] | null
   }
+  onTagClick?: (tag: string) => void
+  selectedTags?: string[]
 }
 
-export function RecipeCard({ recipe }: RecipeCardProps) {
+export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCardProps) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4">
@@ -38,12 +40,23 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           
           {recipe.tags && recipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {recipe.tags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-                  <Tag className="h-3 w-3" />
-                  {tag}
-                </span>
-              ))}
+              {recipe.tags.map(tag => {
+                const isSelected = selectedTags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => onTagClick?.(tag)}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                      isSelected 
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    }`}
+                  >
+                    <Tag className="h-3 w-3" />
+                    {tag}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
