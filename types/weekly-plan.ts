@@ -10,11 +10,15 @@ export const RecipeSourceEnum = z.enum(['user', 'ai']);
 export type RecipeSource = z.infer<typeof RecipeSourceEnum>;
 
 export const MealRecipeItemSchema = z.object({
-  recipe_id: z.string().describe("ID della ricetta nel database"),
+  recipe_id: z.string().describe("ID della ricetta nel database. Se è una nuova ricetta AI, lascia vuoto o metti 'new'."),
   name: z.string(),
   meal_role: MealRoleEnum,
   nutritional_classes: z.array(NutritionalClassEnum).min(1),
   source: RecipeSourceEnum,
+  ai_creation_data: z.object({
+    ingredients: z.array(z.string()),
+    tags: z.array(z.string()),
+  }).optional().describe("Dati per creare la ricetta se source è 'ai'"),
 });
 export type MealRecipeItem = z.infer<typeof MealRecipeItemSchema>;
 
