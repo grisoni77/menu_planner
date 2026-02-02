@@ -281,7 +281,9 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       .insert({
         menu_data: finalWeeklyMenu as any,
         shopping_list: finalShoppingList as any,
-        family_profile_text: extraNotes || "" // Snapshot of user notes as profile context
+        family_profile_text: extraNotes || "", // Snapshot of user notes as profile context
+        model_name: PLANNER_CONFIG.MODEL_NAME,
+        generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION
       })
       .select()
       .single();
