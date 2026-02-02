@@ -104,22 +104,28 @@ export type Database = {
         Row: {
           created_at: string
           family_profile_text: string | null
+          generation_prompt_version: string | null
           id: string
           menu_data: Json
+          model_name: string | null
           shopping_list: Json
         }
         Insert: {
           created_at?: string
           family_profile_text?: string | null
+          generation_prompt_version?: string | null
           id?: string
           menu_data: Json
+          model_name?: string | null
           shopping_list: Json
         }
         Update: {
           created_at?: string
           family_profile_text?: string | null
+          generation_prompt_version?: string | null
           id?: string
           menu_data?: Json
+          model_name?: string | null
           shopping_list?: Json
         }
         Relationships: []
@@ -267,7 +273,7 @@ export const Constants = {
     Enums: {
       nutritional_class: ["veg", "carbs", "protein"],
       recipe_role: ["main", "side"],
-      recipe_source: ["user", "ai"]
+      recipe_source: ["user", "ai"],
     },
   },
 } as const

@@ -12,7 +12,7 @@ import { DayCard } from "./DayCard";
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
+  const [plan, setPlan] = useState<(WeeklyPlan & { model_name?: string }) | null>(null);
 
   async function handleGenerate() {
     setLoading(true);
@@ -25,7 +25,8 @@ export default function PlannerClient() {
           weekly_menu: result.plan.menu_data as DayMenu[],
           shopping_list: result.plan.shopping_list as ShoppingItem[],
           summary_note: result.plan.summary_note || "Menu generato con successo!",
-        } as WeeklyPlan);
+          model_name: result.plan.model_name
+        } as WeeklyPlan & { model_name?: string });
       } else {
         alert("Errore: " + result.error);
       }
@@ -64,8 +65,13 @@ export default function PlannerClient() {
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Lista della Spesa</CardTitle>
+              {plan.model_name && (
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
+                  Model: {plan.model_name}
+                </span>
+              )}
             </CardHeader>
             <CardContent>
               <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
