@@ -16,19 +16,25 @@ export default function PlannerClient() {
 
   async function handleGenerate() {
     setLoading(true);
-    const result = await generateMenuAction(notes);
-    if (result.success && result.plan) {
-      // In a real app we might fetch the latest plan or use the returned one
-      // The DB stores it as Json, we cast it here for UI
-      setPlan({
-        weekly_menu: result.plan.menu_data as DayMenu[],
-        shopping_list: result.plan.shopping_list as ShoppingItem[],
-        summary_note: "Menu generato con successo!", // summary_note is not in DB schema but in AI output, let's fix action later if needed
-      } as WeeklyPlan);
-    } else {
-      alert("Errore: " + result.error);
+    try {
+      const result = await generateMenuAction(notes);
+      if (result.success && result.plan) {
+        // In a real app we might fetch the latest plan or use the returned one
+        // The DB stores it as Json, we cast it here for UI
+        setPlan({
+          weekly_menu: result.plan.menu_data as DayMenu[],
+          shopping_list: result.plan.shopping_list as ShoppingItem[],
+          summary_note: result.plan.summary_note || "Menu generato con successo!",
+        } as WeeklyPlan);
+      } else {
+        alert("Errore: " + result.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Si è verificato un errore durante la generazione.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
