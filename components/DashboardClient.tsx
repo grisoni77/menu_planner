@@ -23,12 +23,30 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
   const [recipeSearch, setRecipeSearch] = useState("")
   const [pantrySearch, setPantrySearch] = useState("")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [selectedNutritional, setSelectedNutritional] = useState<string[]>([])
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
       prev.includes(tag) 
         ? prev.filter(t => t !== tag) 
         : [...prev, tag]
+    )
+  }
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles(prev =>
+      prev.includes(role)
+        ? prev.filter(r => r !== role)
+        : [...prev, role]
+    )
+  }
+
+  const toggleNutritional = (cls: string) => {
+    setSelectedNutritional(prev =>
+      prev.includes(cls)
+        ? prev.filter(c => c !== cls)
+        : [...prev, cls]
     )
   }
 
@@ -41,7 +59,15 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     const tagsMatch = selectedTags.length === 0 || 
       selectedTags.every(tag => recipe.tags?.includes(tag))
 
-    return nameMatch && tagsMatch
+    // Filtro per meal_role (OR se più selezionati)
+    const roleMatch = selectedRoles.length === 0 ||
+      selectedRoles.includes(recipe.meal_role)
+
+    // Filtro per classi nutrizionali (AND - deve averle tutte le classi selezionate)
+    const nutritionalMatch = selectedNutritional.length === 0 ||
+      selectedNutritional.every(cls => recipe.nutritional_classes?.includes(cls))
+
+    return nameMatch && tagsMatch && roleMatch && nutritionalMatch
   })
 
   const filteredPantry = initialPantryItems.filter(item => {
@@ -96,7 +122,45 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
         <TabsContent value="recipes">
           <Card>
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
-              <CardTitle>Le mie Ricette</CardTitle>
+              <div className="space-y-1">
+                <CardTitle>Le mie Ricette</CardTitle>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold mr-1">Tipo:</span>
+                  {['main', 'side'].map(role => (
+                    <Badge 
+                      key={role}
+                      variant={selectedRoles.includes(role) ? "default" : "outline"}
+                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
+                        selectedRoles.includes(role) 
+                          ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
+                          : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                      }`}
+                      onClick={() => toggleRole(role)}
+                    >
+                      {role}
+                    </Badge>
+                  ))}
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Nutr:</span>
+                  {[
+                    {id: 'veg', label: 'Veg', color: 'green'},
+                    {id: 'carbs', label: 'Carbs', color: 'amber'},
+                    {id: 'protein', label: 'Prot', color: 'red'}
+                  ].map(cls => (
+                    <Badge 
+                      key={cls.id}
+                      variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
+                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                        selectedNutritional.includes(cls.id) 
+                          ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
+                          : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                      }`}
+                      onClick={() => toggleNutritional(cls.id)}
+                    >
+                      {cls.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -114,8 +178,30 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
               </div>
             </CardHeader>
             <CardContent>
-              {selectedTags.length > 0 && (
+              {(selectedTags.length > 0 || selectedRoles.length > 0 || selectedNutritional.length > 0) && (
                 <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedRoles.map(role => (
+                    <Badge key={role} variant="secondary" className="flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 border-indigo-200">
+                      Tipo: {role}
+                      <button 
+                        onClick={() => toggleRole(role)}
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {selectedNutritional.map(cls => (
+                    <Badge key={cls} variant="secondary" className="flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-700">
+                      Nutr: {cls}
+                      <button 
+                        onClick={() => toggleNutritional(cls)}
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
                   {selectedTags.map(tag => (
                     <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                       {tag}
@@ -130,7 +216,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => setSelectedTags([])}
+                    onClick={() => {
+                      setSelectedTags([])
+                      setSelectedRoles([])
+                      setSelectedNutritional([])
+                    }}
                     className="h-8 px-2 text-xs"
                   >
                     Svuota filtri
