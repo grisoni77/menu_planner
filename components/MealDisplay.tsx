@@ -62,7 +62,9 @@ export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
               )}
             </div>
             <div className="flex flex-wrap gap-1">
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 uppercase bg-slate-50">
+              <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 uppercase ${
+                recipe.meal_role === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50'
+              }`}>
                 {recipe.meal_role}
               </Badge>
               {recipe.nutritional_classes.map(c => (

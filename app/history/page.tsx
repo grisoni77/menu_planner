@@ -9,7 +9,10 @@ function isV2Plan(plan: any): boolean {
   if (!plan.menu_data || !Array.isArray(plan.menu_data) || plan.menu_data.length === 0) return false;
   const firstDay = plan.menu_data[0];
   // In V2, lunch and dinner are objects with a 'recipes' array
-  return firstDay.lunch && typeof firstDay.lunch === 'object' && Array.isArray(firstDay.lunch.recipes);
+  // In V1, lunch and dinner were likely strings or simple objects without 'recipes'
+  return firstDay && typeof firstDay === 'object' && 
+         firstDay.lunch && typeof firstDay.lunch === 'object' && 
+         Array.isArray(firstDay.lunch.recipes);
 }
 
 export default async function HistoryPage() {
@@ -46,8 +49,11 @@ export default async function HistoryPage() {
                 <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-900">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertTitle>Versione precedente</AlertTitle>
-                  <AlertDescription>
-                    Questo piano è stato generato con una versione precedente del planner e non può essere visualizzato correttamente.
+                  <AlertDescription className="space-y-2">
+                    <p>Questo piano è stato generato con una versione precedente del planner e non può essere visualizzato correttamente con la nuova interfaccia.</p>
+                    <div className="text-[10px] opacity-70 font-mono mt-2 p-2 bg-white/50 rounded overflow-auto max-h-40">
+                      {JSON.stringify(plan.menu_data, null, 2)}
+                    </div>
                   </AlertDescription>
                 </Alert>
               ) : (
