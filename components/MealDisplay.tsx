@@ -2,6 +2,7 @@ import { MealPlan, NutritionalClass } from "@/types/weekly-plan";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { checkCoverage } from "@/lib/planner-utils";
 
 interface MealDisplayProps {
   title: string;
@@ -10,14 +11,8 @@ interface MealDisplayProps {
 }
 
 export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
-  const classesCovered = new Set<NutritionalClass>();
-  meal.recipes.forEach(r => {
-    r.nutritional_classes.forEach(c => classesCovered.add(c));
-  });
-
-  const missingClasses = (['veg', 'carbs', 'protein'] as NutritionalClass[]).filter(
-    c => !classesCovered.has(c)
-  );
+  const classesCovered = meal.recipes.flatMap(r => r.nutritional_classes);
+  const { isComplete, missingClasses } = checkCoverage(classesCovered);
 
   // Ordina le ricette: prima i 'main', poi i 'side'
   const sortedRecipes = [...meal.recipes].sort((a, b) => {
@@ -47,7 +42,12 @@ export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
         {sortedRecipes.map((recipe, idx) => (
           <li key={idx} className="flex flex-col space-y-1">
             <div className="flex items-start justify-between gap-2">
-              <span className="font-semibold leading-tight">{recipe.name}</span>
+              <span className="font-semibold leading-tight">
+                {recipe.name}
+                {recipe.ai_creation_data?.tags?.includes('auto-generato') && (
+                  <span className="text-[10px] text-amber-600 ml-1 font-normal">(auto-aggiunta)</span>
+                )}
+              </span>
               {recipe.source === 'ai' && (
                 <TooltipProvider>
                   <Tooltip>

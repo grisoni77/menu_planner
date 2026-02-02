@@ -1,10 +1,11 @@
 'use server'
 
 import { ChatGroq } from "@langchain/groq";
-import { WeeklyPlanSchema } from "@/types/weekly-plan";
+import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
+import { normalizeRecipeName, PLANNER_CONFIG, checkCoverage } from "@/lib/planner-utils";
 
 type RecipeRole = Database['public']['Enums']['recipe_role'];
 type NutritionalClassDB = Database['public']['Enums']['nutritional_class'];
@@ -34,24 +35,22 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
     const lastMenuContext = lastPlan ? JSON.stringify(lastPlan.menu_data) : 'Nessun menu precedente disponibile';
 
     const prompt = `
-      Sei un assistente esperto nella pianificazione di menu settimanali salutari e bilanciati. Version: planner-v2.0
+      Sei un assistente esperto nella pianificazione di menu settimanali salutari e bilanciati. Version: ${PLANNER_CONFIG.PROMPT_VERSION}
       Il tuo obiettivo è creare un menu per la settimana (7 giorni, pranzo e cena) ottimizzando l'uso degli ingredienti già presenti in dispensa.
 
       REGOLE DI COMPOSIZIONE (COVERAGE):
       Ogni singolo pasto (pranzo o cena) deve essere composto da una o più ricette che, insieme, COPRONO SEMPRE queste tre classi nutrizionali:
-      1. veg (Verdure)
-      2. carbs (Carboidrati)
-      3. protein (Proteine)
+      1. ${PLANNER_CONFIG.REQUIRED_NUTRITIONAL_CLASSES.join(', ')}
       
       REGOLE DI COMPOSIZIONE (SCELTA RICETTE):
       - DAI MAGGIORE PRIORITÀ alle ricette disponibili nel database.
       - Struttura del pasto:
         - Deve includere 1 ricetta main.
-        - Deve includere almeno 1 ricetta side, A MENO CHE la ricetta main copra già veg+carbs+protein da sola.
+        - Deve includere almeno 1 ricetta side, A MENO CHE la ricetta main copra già ${PLANNER_CONFIG.REQUIRED_NUTRITIONAL_CLASSES.join('+')} da sola.
       - Se dopo aver scelto il main manca una classe nutrizionale, DEVI aggiungere un side sostanzioso della classe mancante (non “micro porzioni”).
       - Varietà:
-        - Vietato usare lo stesso main (stesso recipe_id o stesso nome per ricette AI) più di 2 volte nella settimana.
-        - Vietato usare la stessa ricetta (recipe_id) più di 2 volte nella settimana complessiva.
+        - Vietato usare lo stesso main (stesso recipe_id o stesso nome per ricette AI) più di ${PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK} volte nella settimana.
+        - Vietato usare la stessa ricetta (recipe_id) più di ${PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK} volte nella settimana complessiva.
 
       DISPENSA ATTUALE:
       ${pantryContext}
@@ -79,7 +78,7 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
     // 3. LLM Call with Structured Output
     const model = new ChatGroq({
       apiKey: process.env.GROQ_API_KEY,
-      model: "llama-3.3-70b-versatile",
+      model: PLANNER_CONFIG.MODEL_NAME,
     }).withStructuredOutput(WeeklyPlanSchema);
 
     const result = await model.invoke(prompt);
@@ -89,11 +88,60 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
     const finalWeeklyMenu = [...result.weekly_menu];
     const aiRecipeMapping = new Map<string, string>(); // AI Name -> Real ID
 
+    // Fetch some generic side recipes for fallback coverage
+    const { data: fallbackSides } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('meal_role', 'side');
+
     for (const day of finalWeeklyMenu) {
       for (const meal of [day.lunch, day.dinner]) {
+        // Validate coverage
+        const currentClasses = meal.recipes.flatMap(r => r.nutritional_classes);
+        const { isComplete, missingClasses } = checkCoverage(currentClasses);
+
+        if (!isComplete) {
+          console.warn(`Pasto incompleto (${day.day} ${meal === day.lunch ? 'Pranzo' : 'Cena'}). Classi mancanti: ${missingClasses.join(', ')}`);
+          
+          for (const missing of missingClasses) {
+            // Find a side in DB that covers the missing class
+            const suitableSide = fallbackSides?.find(s => 
+              s.nutritional_classes.includes(missing as NutritionalClassDB)
+            );
+
+            if (suitableSide) {
+              meal.recipes.push({
+                recipe_id: suitableSide.id,
+                name: suitableSide.name,
+                meal_role: 'side',
+                nutritional_classes: suitableSide.nutritional_classes as any,
+                source: 'user'
+              });
+            } else {
+              // Extreme fallback: AI-like generic side if nothing in DB
+              const genericNames: Record<string, string> = {
+                'veg': 'Verdure di stagione al vapore',
+                'carbs': 'Pane integrale di accompagnamento',
+                'protein': 'Uovo sodo o Legumi rapidi'
+              };
+              meal.recipes.push({
+                recipe_id: 'new',
+                name: genericNames[missing] || `Side per ${missing}`,
+                meal_role: 'side',
+                nutritional_classes: [missing] as any,
+                source: 'ai',
+                ai_creation_data: {
+                  ingredients: [genericNames[missing] || missing],
+                  tags: ['auto-generato', 'fallback-coverage']
+                }
+              });
+            }
+          }
+        }
+
         for (const recipe of meal.recipes) {
           if (recipe.source === 'ai' || recipe.recipe_id === 'new') {
-            const normalizedName = recipe.name.trim().toLowerCase().replace(/\s+/g, ' ');
+            const normalizedName = normalizeRecipeName(recipe.name);
             
             // Check if this AI recipe was already created/found in this session
             if (aiRecipeMapping.has(normalizedName)) {
@@ -123,8 +171,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
                   tags: recipe.ai_creation_data?.tags || [],
                   source: 'ai',
                   generated_at: new Date().toISOString(),
-                  model_name: "llama-3.3-70b-versatile",
-                  generation_prompt_version: 'planner-v2.0'
+                  model_name: PLANNER_CONFIG.MODEL_NAME,
+                  generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION
                 })
                 .select()
                 .single();
@@ -144,8 +192,9 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       ...item,
       recipe_ids: item.recipe_ids.map(rid => {
         // If it looks like a name (not a UUID), try to find the ID from our mapping
-        if (rid.length > 10 && aiRecipeMapping.has(rid.trim().toLowerCase().replace(/\s+/g, ' '))) {
-          return aiRecipeMapping.get(rid.trim().toLowerCase().replace(/\s+/g, ' '))!;
+        const normalizedRid = normalizeRecipeName(rid);
+        if (rid.length > 10 && aiRecipeMapping.has(normalizedRid)) {
+          return aiRecipeMapping.get(normalizedRid)!;
         }
         return rid;
       })
