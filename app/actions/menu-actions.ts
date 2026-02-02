@@ -4,6 +4,11 @@ import { ChatGroq } from "@langchain/groq";
 import { WeeklyPlanSchema } from "@/types/weekly-plan";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
+import { Database } from "@/types/supabase";
+
+type RecipeRole = Database['public']['Enums']['recipe_role'];
+type NutritionalClassDB = Database['public']['Enums']['nutritional_class'];
+type RecipeSourceDB = Database['public']['Enums']['recipe_source'];
 
 export async function generateMenuAction(extraNotes: string) {
   try {
@@ -124,11 +129,20 @@ export async function addRecipeAction(formData: FormData) {
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
+    const meal_role = (formData.get('meal_role') as RecipeRole) || 'main';
+    const nutritional_classes = formData.getAll('nutritional_classes') as NutritionalClassDB[];
     
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    const { error } = await (supabase.from('recipes') as any).insert({ name, ingredients, tags } as any);
+    const { error } = await supabase.from('recipes').insert({ 
+        name, 
+        ingredients: ingredients as any, 
+        tags,
+        meal_role,
+        nutritional_classes,
+        source: 'user' as RecipeSourceDB
+    });
     if (error && error.code === '23505') {
       return { success: false, error: "Una ricetta con questo nome esiste già." };
     }
@@ -141,11 +155,17 @@ export async function updateRecipeAction(id: string, formData: FormData) {
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
+    const meal_role = (formData.get('meal_role') as RecipeRole);
+    const nutritional_classes = formData.getAll('nutritional_classes') as NutritionalClassDB[];
     
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    const { error } = await (supabase.from('recipes') as any).update({ name, ingredients, tags } as any).eq('id', id);
+    const updateData: any = { name, ingredients, tags };
+    if (meal_role) updateData.meal_role = meal_role;
+    updateData.nutritional_classes = nutritional_classes;
+
+    const { error } = await supabase.from('recipes').update(updateData).eq('id', id);
     if (error && error.code === '23505') {
       return { success: false, error: "Una ricetta con questo nome esiste già." };
     }
@@ -168,7 +188,7 @@ export async function importRecipesAction(formData: FormData) {
     const content = await file.text();
     const lines = content.split('\n');
     
-    const recipesToInsert = [];
+    const recipesToInsert: Database['public']['Tables']['recipes']['Insert'][] = [];
     
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -196,15 +216,26 @@ export async function importRecipesAction(formData: FormData) {
       const name = parts[0].replace(/^"|"$/g, '').trim();
       const ingredientsRaw = parts[1].replace(/^"|"$/g, '').trim();
       const tagsRaw = parts[2] ? parts[2].replace(/^"|"$/g, '').trim() : "";
+      const mealRoleRaw = parts[3] ? parts[3].replace(/^"|"$/g, '').toLowerCase().trim() : "main";
+      const classesRaw = parts[4] ? parts[4].replace(/^"|"$/g, '').toLowerCase().trim() : "";
 
       const ingredients = ingredientsRaw.split(/[;,]/).map(ing => ({ name: ing.trim() })).filter(ing => ing.name);
       const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+      const meal_role = (mealRoleRaw === 'side' || mealRoleRaw === 'main') ? (mealRoleRaw as RecipeRole) : 'main';
+      const nutritional_classes = classesRaw ? classesRaw.split(',').map(c => c.trim()).filter(c => ['veg', 'carbs', 'protein'].includes(c)) as NutritionalClassDB[] : [];
 
-      recipesToInsert.push({ name, ingredients, tags });
+      recipesToInsert.push({ 
+        name, 
+        ingredients: ingredients as any, 
+        tags, 
+        meal_role, 
+        nutritional_classes,
+        source: 'user' as RecipeSourceDB
+      });
     }
 
     if (recipesToInsert.length > 0) {
-      const { error } = await supabase.from('recipes').upsert(recipesToInsert, { onConflict: 'name' });
+      const { error } = await supabase.from('recipes').upsert(recipesToInsert as any, { onConflict: 'name' });
       if (error) throw error;
     }
 

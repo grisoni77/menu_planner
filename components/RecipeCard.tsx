@@ -2,9 +2,11 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trash2, Tag } from "lucide-react"
+import { Trash2, Tag, Sparkles, Info } from "lucide-react"
 import { RecipeFormModal } from "./RecipeFormModal"
 import { deleteRecipeAction } from "@/app/actions/menu-actions"
+import { Badge } from "@/components/ui/badge"
+import { NutritionalClass, MealRole, RecipeSource } from "@/types/weekly-plan"
 
 interface RecipeCardProps {
   recipe: {
@@ -12,19 +14,47 @@ interface RecipeCardProps {
     name: string
     ingredients: { name: string }[]
     tags: string[] | null
+    nutritional_classes?: NutritionalClass[]
+    meal_role?: MealRole
+    source?: RecipeSource
   }
   onTagClick?: (tag: string) => void
   selectedTags?: string[]
 }
 
 export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCardProps) {
+  const isAI = recipe.source === 'ai'
+  const hasNoClasses = !recipe.nutritional_classes || recipe.nutritional_classes.length === 0
+
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${isAI ? 'border-purple-200 bg-purple-50/30' : ''}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-lg leading-tight">{recipe.name}</h3>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-lg leading-tight">{recipe.name}</h3>
+              {isAI && (
+                <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 flex gap-1 items-center px-1.5 py-0">
+                  <Sparkles className="h-3 w-3" />
+                  AI
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {recipe.meal_role && (
+                <Badge variant="secondary" className="text-[10px] uppercase tracking-wider px-1.5 py-0 h-4">
+                  {recipe.meal_role}
+                </Badge>
+              )}
+              {recipe.nutritional_classes?.map(cls => (
+                <Badge key={cls} variant="outline" className="text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 bg-white">
+                  {cls}
+                </Badge>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-1">
-            <RecipeFormModal recipe={recipe} />
+            <RecipeFormModal recipe={recipe as any} />
             <form action={deleteRecipeAction.bind(null, recipe.id)}>
               <Button variant="ghost" size="icon" type="submit">
                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -34,6 +64,13 @@ export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCard
         </div>
         
         <div className="space-y-3">
+          {hasNoClasses && (
+            <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-1 rounded text-xs border border-amber-100">
+              <Info className="h-3 w-3" />
+              Classi non impostate
+            </div>
+          )}
+
           <div className="text-sm text-muted-foreground line-clamp-2">
             {recipe.ingredients.map(i => i.name).join(', ')}
           </div>
