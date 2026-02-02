@@ -60,39 +60,37 @@ export default function PlannerClient() {
                   <div>
                     <span className="font-bold block border-b mb-1">Pranzo:</span>
                     <ul className="space-y-1">
-                      {/* @ts-ignore - Temporary bypass during Step 2 */}
-                      <li className="text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs">
-                        <span className="font-semibold">Verdure:</span> {typeof day.lunch === 'string' ? day.lunch : (day.lunch as any).vegetables}
-                      </li>
-                      {typeof day.lunch !== 'string' && (
-                        <>
-                          <li className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs">
-                            <span className="font-semibold">Carboidrati:</span> {(day.lunch as any).carbs}
-                          </li>
-                          <li className="text-red-700 bg-red-50 px-2 py-0.5 rounded text-xs">
-                            <span className="font-semibold">Proteine:</span> {(day.lunch as any).proteins}
-                          </li>
-                        </>
-                      )}
+                      {day.lunch.recipes.map((recipe, idx) => (
+                        <li key={idx} className="flex flex-col border-b border-green-100 last:border-0 pb-1 mb-1">
+                          <span className="font-semibold text-green-900">{recipe.name}</span>
+                          <div className="flex gap-1 mt-0.5">
+                            {recipe.nutritional_classes.map(c => (
+                              <span key={c} className="text-[10px] px-1 bg-green-100 text-green-700 rounded capitalize">{c}</span>
+                            ))}
+                            {recipe.source === 'ai' && (
+                              <span className="text-[10px] px-1 bg-purple-100 text-purple-700 rounded">AI</span>
+                            )}
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                   <div>
                     <span className="font-bold block border-b mb-1">Cena:</span>
                     <ul className="space-y-1">
-                      {/* @ts-ignore - Temporary bypass during Step 2 */}
-                      <li className="text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs">
-                        <span className="font-semibold">Verdure:</span> {typeof day.dinner === 'string' ? day.dinner : (day.dinner as any).vegetables}
-                      </li>
-                      {typeof day.dinner !== 'string' && (
-                        <>
-                          <li className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs">
-                            <span className="font-semibold">Carboidrati:</span> {(day.dinner as any).carbs}
-                          </li>
-                          <li className="text-red-700 bg-red-50 px-2 py-0.5 rounded text-xs">
-                            <span className="font-semibold">Proteine:</span> {(day.dinner as any).proteins}
-                          </li>
-                        </>
-                      )}
+                      {day.dinner.recipes.map((recipe, idx) => (
+                        <li key={idx} className="flex flex-col border-b border-blue-100 last:border-0 pb-1 mb-1">
+                          <span className="font-semibold text-blue-900">{recipe.name}</span>
+                          <div className="flex gap-1 mt-0.5">
+                            {recipe.nutritional_classes.map(c => (
+                              <span key={c} className="text-[10px] px-1 bg-blue-100 text-blue-700 rounded capitalize">{c}</span>
+                            ))}
+                            {recipe.source === 'ai' && (
+                              <span className="text-[10px] px-1 bg-purple-100 text-purple-700 rounded">AI</span>
+                            )}
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                   {day.ingredients_used_from_pantry.length > 0 && (
@@ -118,8 +116,9 @@ export default function PlannerClient() {
                     <span className="flex-1">
                       <span className="font-medium">{item.item}</span> ({item.quantity})
                     </span>
-                    {/* @ts-ignore - Temporary bypass during Step 2 */}
-                    <span className="text-xs text-muted-foreground italic">{item.reason}</span>
+                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-muted-foreground">
+                      usato in {item.recipe_ids.length} ricett{item.recipe_ids.length === 1 ? 'a' : 'e'}
+                    </span>
                   </li>
                 ))}
               </ul>
