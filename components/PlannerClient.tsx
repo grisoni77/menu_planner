@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateMenuAction } from "@/app/actions/menu-actions";
 import { WeeklyPlan, DayMenu, ShoppingItem } from "@/types/weekly-plan";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Download } from "lucide-react";
 import { DayCard } from "./DayCard";
+import { ExportButton } from "./ExportButton";
 
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
@@ -58,6 +59,15 @@ export default function PlannerClient() {
 
       {plan && (
         <div className="space-y-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Il tuo menu per la settimana</h2>
+            <ExportButton 
+              data={[plan]} 
+              filename="piano-settimanale.md" 
+              type="weekly-plan" 
+              label="Esporta Piano (MD)"
+            />
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.weekly_menu.map((day) => (
               <DayCard key={day.day} day={day} />
