@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateMenuAction } from "@/app/actions/menu-actions";
 import { WeeklyPlan, DayMenu, ShoppingItem } from "@/types/weekly-plan";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { DayCard } from "./DayCard";
 
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
@@ -52,55 +53,7 @@ export default function PlannerClient() {
         <div className="space-y-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {plan.weekly_menu.map((day) => (
-              <Card key={day.day}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{day.day}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-4">
-                  <div>
-                    <span className="font-bold block border-b mb-1">Pranzo:</span>
-                    <ul className="space-y-1">
-                      {day.lunch.recipes.map((recipe, idx) => (
-                        <li key={idx} className="flex flex-col border-b border-green-100 last:border-0 pb-1 mb-1">
-                          <span className="font-semibold text-green-900">{recipe.name}</span>
-                          <div className="flex gap-1 mt-0.5">
-                            {recipe.nutritional_classes.map(c => (
-                              <span key={c} className="text-[10px] px-1 bg-green-100 text-green-700 rounded capitalize">{c}</span>
-                            ))}
-                            {recipe.source === 'ai' && (
-                              <span className="text-[10px] px-1 bg-purple-100 text-purple-700 rounded">AI</span>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <span className="font-bold block border-b mb-1">Cena:</span>
-                    <ul className="space-y-1">
-                      {day.dinner.recipes.map((recipe, idx) => (
-                        <li key={idx} className="flex flex-col border-b border-blue-100 last:border-0 pb-1 mb-1">
-                          <span className="font-semibold text-blue-900">{recipe.name}</span>
-                          <div className="flex gap-1 mt-0.5">
-                            {recipe.nutritional_classes.map(c => (
-                              <span key={c} className="text-[10px] px-1 bg-blue-100 text-blue-700 rounded capitalize">{c}</span>
-                            ))}
-                            {recipe.source === 'ai' && (
-                              <span className="text-[10px] px-1 bg-purple-100 text-purple-700 rounded">AI</span>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {day.ingredients_used_from_pantry.length > 0 && (
-                    <div className="text-xs text-green-600 flex items-start gap-1">
-                      <CheckCircle2 className="h-3 w-3 mt-0.5" />
-                      Usa: {day.ingredients_used_from_pantry.join(', ')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <DayCard key={day.day} day={day} />
             ))}
           </div>
 
@@ -109,14 +62,14 @@ export default function PlannerClient() {
               <CardTitle>Lista della Spesa</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="grid md:grid-cols-2 gap-2">
+              <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {plan.shopping_list.map((item, idx) => (
                   <li key={idx} className="flex items-center gap-2 border-b pb-1">
                     <input type="checkbox" className="h-4 w-4" />
                     <span className="flex-1">
                       <span className="font-medium">{item.item}</span> ({item.quantity})
                     </span>
-                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-muted-foreground">
+                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-muted-foreground" title={item.recipe_ids.join(', ')}>
                       usato in {item.recipe_ids.length} ricett{item.recipe_ids.length === 1 ? 'a' : 'e'}
                     </span>
                   </li>
