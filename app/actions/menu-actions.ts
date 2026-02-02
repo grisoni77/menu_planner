@@ -506,11 +506,45 @@ export async function importPantryItemsAction(formData: FormData) {
     }
 
     revalidatePath('/dashboard');
-    revalidatePath('/');
     return { success: true, count: itemsToInsert.length };
   } catch (error) {
     console.error("Errore durante l'importazione CSV dispensa:", error);
     return { success: false, error: "Errore durante l'elaborazione del file CSV" };
+  }
+}
+
+export async function importWeeklyPlansAction(formData: FormData) {
+  const file = formData.get('file') as File;
+  if (!file) return { success: false, error: "Nessun file fornito" };
+
+  try {
+    const content = await file.text();
+    const data = JSON.parse(content);
+    
+    if (!Array.isArray(data)) {
+      throw new Error("Il file deve contenere un array di piani settimanali");
+    }
+
+    const plansToInsert = data.map(plan => ({
+      menu_data: plan.menu_data,
+      shopping_list: plan.shopping_list,
+      family_profile_text: plan.family_profile_text || "",
+      model_name: plan.model_name || null,
+      generation_prompt_version: plan.generation_prompt_version || null,
+      created_at: plan.created_at || new Date().toISOString()
+    }));
+
+    if (plansToInsert.length > 0) {
+      const { error } = await supabase.from('weekly_plans').insert(plansToInsert as any);
+      if (error) throw error;
+    }
+
+    revalidatePath('/history');
+    revalidatePath('/planner');
+    return { success: true, count: plansToInsert.length };
+  } catch (error) {
+    console.error("Errore durante l'importazione dei piani:", error);
+    return { success: false, error: "Errore durante l'elaborazione del file JSON. Assicurati che sia un formato valido esportato dall'app." };
   }
 }
 

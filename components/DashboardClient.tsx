@@ -12,6 +12,7 @@ import { RecipeFormModal } from "@/components/RecipeFormModal"
 import { ImportRecipesModal } from "@/components/ImportRecipesModal"
 import { PantryItemFormModal } from "@/components/PantryItemFormModal"
 import { ImportPantryModal } from "@/components/ImportPantryModal"
+import { ExportButton } from "@/components/ExportButton"
 import { Badge } from "@/components/ui/badge"
 
 interface DashboardClientProps {
@@ -99,6 +100,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   />
                 </div>
                 <div className="flex gap-2">
+                  <ExportButton 
+                    data={filteredPantry} 
+                    filename="dispensa.csv" 
+                    type="pantry" 
+                  />
                   <ImportPantryModal />
                   <PantryItemFormModal />
                 </div>
@@ -172,6 +178,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   />
                 </div>
                 <div className="flex gap-2">
+                  <ExportButton 
+                    data={filteredRecipes} 
+                    filename="ricette.csv" 
+                    type="recipes" 
+                  />
                   <ImportRecipesModal />
                   <RecipeFormModal />
                 </div>
