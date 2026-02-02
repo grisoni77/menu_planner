@@ -1,23 +1,43 @@
 import { z } from "zod";
 
+export const NutritionalClassEnum = z.enum(['veg', 'carbs', 'protein']);
+export type NutritionalClass = z.infer<typeof NutritionalClassEnum>;
+
+export const MealRoleEnum = z.enum(['main', 'side']);
+export type MealRole = z.infer<typeof MealRoleEnum>;
+
+export const RecipeSourceEnum = z.enum(['user', 'ai']);
+export type RecipeSource = z.infer<typeof RecipeSourceEnum>;
+
+export const MealRecipeItemSchema = z.object({
+  recipe_id: z.string().describe("ID della ricetta nel database"),
+  name: z.string(),
+  meal_role: MealRoleEnum,
+  nutritional_classes: z.array(NutritionalClassEnum).min(1),
+  source: RecipeSourceEnum,
+});
+export type MealRecipeItem = z.infer<typeof MealRecipeItemSchema>;
+
+export const MealPlanSchema = z.object({
+  recipes: z.array(MealRecipeItemSchema).min(1),
+  notes: z.string().optional(),
+});
+export type MealPlan = z.infer<typeof MealPlanSchema>;
+
 export const ShoppingItemSchema = z.object({
   item: z.string(),
   quantity: z.string(),
-  reason: z.string().describe("Per quale ricetta serve"),
+  recipe_ids: z.array(z.string()).min(1).describe("ID delle ricette che richiedono questo ingrediente"),
 });
-
-export const MealSchema = z.object({
-  vegetables: z.string().describe("Componente verdura (50%)"),
-  carbs: z.string().describe("Componente carboidrati (30%)"),
-  proteins: z.string().describe("Componente proteine (20%)"),
-});
+export type ShoppingItem = z.infer<typeof ShoppingItemSchema>;
 
 export const DayMenuSchema = z.object({
   day: z.enum(["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]),
-  lunch: z.union([z.string(), MealSchema]),
-  dinner: z.union([z.string(), MealSchema]),
+  lunch: MealPlanSchema,
+  dinner: MealPlanSchema,
   ingredients_used_from_pantry: z.array(z.string()),
 });
+export type DayMenu = z.infer<typeof DayMenuSchema>;
 
 export const WeeklyPlanSchema = z.object({
   weekly_menu: z.array(DayMenuSchema),
@@ -26,5 +46,3 @@ export const WeeklyPlanSchema = z.object({
 });
 
 export type WeeklyPlan = z.infer<typeof WeeklyPlanSchema>;
-export type DayMenu = z.infer<typeof DayMenuSchema>;
-export type ShoppingItem = z.infer<typeof ShoppingItemSchema>;
