@@ -3,6 +3,23 @@ export const PLANNER_CONFIG = {
   MODEL_NAME: 'llama-3.3-70b-versatile',
   REQUIRED_NUTRITIONAL_CLASSES: ['veg', 'carbs', 'protein'] as const,
   MAX_RECIPE_FREQUENCY_PER_WEEK: 2,
+  GENERIC_FALLBACKS: {
+    veg: [
+      'Verdure di stagione al vapore',
+      'Insalata mista fresca',
+      'Verdure grigliate (zucchine e melanzane)'
+    ],
+    carbs: [
+      'Pane integrale di accompagnamento',
+      'Gallette di riso o mais',
+      'Patate lesse velocissime'
+    ],
+    protein: [
+      'Uovo sodo o Legumi rapidi',
+      'Fiocchi di latte o formaggio magro',
+      'Tofu a cubetti saltato'
+    ]
+  }
 };
 
 /**
