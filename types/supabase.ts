@@ -61,23 +61,41 @@ export type Database = {
       recipes: {
         Row: {
           created_at: string
+          generated_at: string | null
+          generation_prompt_version: string | null
           id: string
           ingredients: Json
+          meal_role: Database["public"]["Enums"]["recipe_role"]
+          model_name: string | null
           name: string
+          nutritional_classes: Database["public"]["Enums"]["nutritional_class"][]
+          source: Database["public"]["Enums"]["recipe_source"]
           tags: string[] | null
         }
         Insert: {
           created_at?: string
+          generated_at?: string | null
+          generation_prompt_version?: string | null
           id?: string
           ingredients: Json
+          meal_role?: Database["public"]["Enums"]["recipe_role"]
+          model_name?: string | null
           name: string
+          nutritional_classes?: Database["public"]["Enums"]["nutritional_class"][]
+          source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
         }
         Update: {
           created_at?: string
+          generated_at?: string | null
+          generation_prompt_version?: string | null
           id?: string
           ingredients?: Json
+          meal_role?: Database["public"]["Enums"]["recipe_role"]
+          model_name?: string | null
           name?: string
+          nutritional_classes?: Database["public"]["Enums"]["nutritional_class"][]
+          source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
         }
         Relationships: []
@@ -85,18 +103,21 @@ export type Database = {
       weekly_plans: {
         Row: {
           created_at: string
+          family_profile_text: string | null
           id: string
           menu_data: Json
           shopping_list: Json
         }
         Insert: {
           created_at?: string
+          family_profile_text?: string | null
           id?: string
           menu_data: Json
           shopping_list: Json
         }
         Update: {
           created_at?: string
+          family_profile_text?: string | null
           id?: string
           menu_data?: Json
           shopping_list?: Json
@@ -111,7 +132,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      nutritional_class: "veg" | "carbs" | "protein"
+      recipe_role: "main" | "side"
+      recipe_source: "user" | "ai"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -241,7 +264,11 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      nutritional_class: ["veg", "carbs", "protein"],
+      recipe_role: ["main", "side"],
+      recipe_source: ["user", "ai"]
+    },
   },
 } as const
 
