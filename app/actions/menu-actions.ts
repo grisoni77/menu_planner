@@ -88,6 +88,29 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
     const finalWeeklyMenu = [...result.weekly_menu];
     const aiRecipeMapping = new Map<string, string>(); // AI Name -> Real ID
 
+    // Pre-calculate recipe frequencies from LLM result to respect MAX_RECIPE_FREQUENCY_PER_WEEK
+    const recipeUsageCounts = new Map<string, number>(); // ID or normalized name -> count
+    for (const day of finalWeeklyMenu) {
+      for (const meal of [day.lunch, day.dinner]) {
+        for (const r of meal.recipes) {
+          const key = r.recipe_id !== 'new' && r.recipe_id ? r.recipe_id : normalizeRecipeName(r.name);
+          recipeUsageCounts.set(key, (recipeUsageCounts.get(key) || 0) + 1);
+        }
+      }
+    }
+
+    // Identify recipes that exceed frequency limits from LLM
+    const recipesToReplace = new Set<string>();
+    recipeUsageCounts.forEach((count, key) => {
+      if (count > PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK) {
+        console.warn(`Ricetta "${key}" supera il limite di frequenza (${count}/${PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK}). Verrà tentata la sostituzione.`);
+        recipesToReplace.add(key);
+      }
+    });
+
+    // Extract all unique recipe IDs from the LLM result to pre-fetch them if needed
+    // (Actually we already have fallbackSides from DB)
+
     // Fetch some generic side recipes for fallback coverage
     const { data: fallbackSides } = await supabase
       .from('recipes')
@@ -96,7 +119,46 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
 
     for (const day of finalWeeklyMenu) {
       for (const meal of [day.lunch, day.dinner]) {
-        // Validate coverage
+        // 1. Handle over-frequency recipes (Main or Side)
+        for (let i = 0; i < meal.recipes.length; i++) {
+          const r = meal.recipes[i];
+          const key = r.recipe_id !== 'new' && r.recipe_id ? r.recipe_id : normalizeRecipeName(r.name);
+          
+          if (recipesToReplace.has(key)) {
+            const currentCount = recipeUsageCounts.get(key) || 0;
+            if (currentCount > PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK) {
+              console.info(`Sostituzione ricetta in eccesso: ${r.name} (${day.day})`);
+              
+              // Try to find a substitute in DB with same role and at least one same nutritional class
+              const substitute = (r.meal_role === 'side' ? fallbackSides : [])
+                ?.filter(s => 
+                  s.meal_role === r.meal_role && 
+                  s.id !== r.recipe_id &&
+                  s.nutritional_classes.some(c => r.nutritional_classes.includes(c as any))
+                )
+                .sort((a, b) => (recipeUsageCounts.get(a.id) || 0) - (recipeUsageCounts.get(b.id) || 0))
+                .find(s => (recipeUsageCounts.get(s.id) || 0) < PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK);
+
+              if (substitute) {
+                meal.recipes[i] = {
+                  recipe_id: substitute.id,
+                  name: substitute.name,
+                  meal_role: substitute.meal_role as any,
+                  nutritional_classes: substitute.nutritional_classes as any,
+                  source: 'user'
+                };
+                recipeUsageCounts.set(key, currentCount - 1);
+                recipeUsageCounts.set(substitute.id, (recipeUsageCounts.get(substitute.id) || 0) + 1);
+              } else if (r.meal_role === 'side') {
+                // If it's a side and no DB substitute, we'll let coverage handling (below) deal with it if we remove it
+                // For now, if we can't substitute, we keep it to avoid breaking coverage, 
+                // but at least we've tried.
+              }
+            }
+          }
+        }
+
+        // 2. Validate coverage
         const currentClasses = meal.recipes.flatMap(r => r.nutritional_classes);
         const { isComplete, missingClasses } = checkCoverage(currentClasses);
 
@@ -104,10 +166,11 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
           console.warn(`Pasto incompleto (${day.day} ${meal === day.lunch ? 'Pranzo' : 'Cena'}). Classi mancanti: ${missingClasses.join(', ')}`);
           
           for (const missing of missingClasses) {
-            // Find a side in DB that covers the missing class
-            const suitableSide = fallbackSides?.find(s => 
-              s.nutritional_classes.includes(missing as NutritionalClassDB)
-            );
+            // Find a side in DB that covers the missing class and respects frequency limits
+            const suitableSide = fallbackSides
+              ?.filter(s => s.nutritional_classes.includes(missing as NutritionalClassDB))
+              .sort((a, b) => (recipeUsageCounts.get(a.id) || 0) - (recipeUsageCounts.get(b.id) || 0)) // Prefer less used
+              .find(s => (recipeUsageCounts.get(s.id) || 0) < PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK);
 
             if (suitableSide) {
               meal.recipes.push({
@@ -117,24 +180,36 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
                 nutritional_classes: suitableSide.nutritional_classes as any,
                 source: 'user'
               });
+              // Update usage count
+              recipeUsageCounts.set(suitableSide.id, (recipeUsageCounts.get(suitableSide.id) || 0) + 1);
             } else {
               // Extreme fallback: AI-like generic side if nothing in DB
-              const genericNames: Record<string, string> = {
-                'veg': 'Verdure di stagione al vapore',
-                'carbs': 'Pane integrale di accompagnamento',
-                'protein': 'Uovo sodo o Legumi rapidi'
-              };
+              const candidates = PLANNER_CONFIG.GENERIC_FALLBACKS[missing as keyof typeof PLANNER_CONFIG.GENERIC_FALLBACKS] || [];
+              const chosenFallback = candidates
+                .sort((a, b) => (recipeUsageCounts.get(normalizeRecipeName(a)) || 0) - (recipeUsageCounts.get(normalizeRecipeName(b)) || 0))
+                .find(name => (recipeUsageCounts.get(normalizeRecipeName(name)) || 0) < PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK) 
+                || candidates[0] 
+                || `Side per ${missing}`;
+
               meal.recipes.push({
                 recipe_id: 'new',
-                name: genericNames[missing] || `Side per ${missing}`,
+                name: chosenFallback,
                 meal_role: 'side',
                 nutritional_classes: [missing] as any,
                 source: 'ai',
                 ai_creation_data: {
-                  ingredients: [genericNames[missing] || missing],
+                  ingredients: [chosenFallback],
                   tags: ['auto-generato', 'fallback-coverage']
                 }
               });
+
+              // Update usage count for the generic fallback as well
+              const key = normalizeRecipeName(chosenFallback);
+              recipeUsageCounts.set(key, (recipeUsageCounts.get(key) || 0) + 1);
+
+              if ((recipeUsageCounts.get(key) || 0) > PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK) {
+                console.warn(`Fallback generico "${chosenFallback}" supera il limite di frequenza. Considerare l'aggiunta di più contorni nel DB.`);
+              }
             }
           }
         }
