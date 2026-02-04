@@ -17,9 +17,9 @@ export const PLANNER_CONFIG = {
       'Patate lesse velocissime'
     ],
     protein: [
-      'Uovo sodo o Legumi rapidi',
+      'Uovo sodo',
       'Fiocchi di latte o formaggio magro',
-      'Tofu a cubetti saltato'
+      'Legumi rapidi'
     ]
   }
 };
