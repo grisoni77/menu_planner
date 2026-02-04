@@ -66,14 +66,15 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
 
       ISTRUZIONI VINCOLANTI:
       1. Se l'utente indica esplicitamente che un pasto è fuori casa (es. "mangiamo fuori", "pasto fuori"), lascia l'array "recipes" VUOTO per quel pasto e usa il campo "notes" per indicare "Pasto fuori casa".
-      2. Per ogni ricetta selezionata dal DATABASE, devi assolutamente restituire il suo "recipe_id" originale.
-      3. Se non ci sono ricette adatte nel database, inventa nuove ricette semplici coerenti con la dispensa.
-      4. Per le ricette inventate (AI):
+      2. Per ogni pasto, indica in "ingredients_used_from_pantry" quali ingredienti della dispensa sono stati usati specificamente per quel pranzo o cena.
+      3. Per ogni ricetta selezionata dal DATABASE, devi assolutamente restituire il suo "recipe_id" originale.
+      4. Se non ci sono ricette adatte nel database, inventa nuove ricette semplici coerenti con la dispensa.
+      5. Per le ricette inventate (AI):
          - Imposta "recipe_id" a "new"
          - Imposta "source" a "ai"
          - Fornisci "ai_creation_data" con "ingredients" e "tags" (es. veloce, economico, forno).
-      5. Genera una shopping_list aggregata per ingrediente. Per ogni voce della shopping list, includi gli ID delle ricette che richiedono quell'ingrediente. Se la ricetta è nuova, usa il nome della ricetta come riferimento temporaneo nell'array recipe_ids.
-      6. Rispondi in Italiano.
+      6. Genera una shopping_list aggregata per ingrediente. Per ogni voce della shopping list, includi gli ID delle ricette che richiedono quell'ingrediente. Se la ricetta è nuova, usa il nome della ricetta come riferimento temporaneo nell'array recipe_ids.
+      7. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output
@@ -238,20 +239,87 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
             if (existingRecipe) {
               recipe.recipe_id = existingRecipe.id;
               aiRecipeMapping.set(normalizedName, existingRecipe.id);
+            }
+          }
+        }
+      }
+    }
+
+    // 5. Return draft
+    return { 
+      success: true, 
+      draft: { 
+        weekly_menu: finalWeeklyMenu, 
+        shopping_list: result.shopping_list, 
+        summary_note: result.summary_note,
+        model_name: PLANNER_CONFIG.MODEL_NAME,
+        generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION,
+        notes: extraNotes || ""
+      } 
+    };
+
+  } catch (error) {
+    console.error("Errore durante la generazione del menu:", error);
+    return { success: false, error: "Si è verificato un errore durante la generazione del menu." };
+  }
+}
+
+export async function saveWeeklyPlanAction(payload: any) {
+  try {
+    const { weekly_menu, notes, model_name, generation_prompt_version } = payload;
+    
+    // 1. Process AI recipes
+    const finalWeeklyMenu = JSON.parse(JSON.stringify(weekly_menu)); // Deep clone to avoid mutating draft state
+    const aiRecipeMapping = new Map<string, string>();
+
+    for (const day of finalWeeklyMenu) {
+      for (const mealKey of ['lunch', 'dinner'] as const) {
+        const meal = day[mealKey];
+        if (meal.recipes.length === 0) {
+          if (!meal.notes?.toLowerCase().includes("pasto fuori casa")) {
+            return { success: false, error: `Il pasto di ${day.day} (${mealKey}) è vuoto ma non è segnato come pasto fuori casa.` };
+          }
+          continue;
+        }
+
+        // Domain validation: coverage
+        const currentClasses = meal.recipes.flatMap((r: any) => r.nutritional_classes);
+        const { isComplete, missingClasses } = checkCoverage(currentClasses);
+        if (!isComplete) {
+          return { success: false, error: `Il pasto di ${day.day} (${mealKey}) è incompleto. Classi mancanti: ${missingClasses.join(', ')}` };
+        }
+
+        for (const recipe of meal.recipes) {
+          if (recipe.recipe_id === 'new' || recipe.source === 'ai') {
+            const normalizedName = normalizeRecipeName(recipe.name);
+            
+            if (aiRecipeMapping.has(normalizedName)) {
+              recipe.recipe_id = aiRecipeMapping.get(normalizedName)!;
+              continue;
+            }
+
+            const { data: existingRecipe } = await supabase
+              .from('recipes')
+              .select('id')
+              .ilike('name', normalizedName)
+              .maybeSingle();
+
+            if (existingRecipe) {
+              recipe.recipe_id = existingRecipe.id;
+              aiRecipeMapping.set(normalizedName, existingRecipe.id);
             } else {
-              // Insert new AI recipe
               const { data: newRecipe, error: insertError } = await supabase
                 .from('recipes')
                 .insert({
                   name: recipe.name,
                   meal_role: recipe.meal_role as RecipeRole,
                   nutritional_classes: recipe.nutritional_classes as NutritionalClassDB[],
-                  ingredients: recipe.ai_creation_data?.ingredients || [],
+                  ingredients: recipe.ai_creation_data?.ingredients.map((i: string) => ({ name: i })) || [],
                   tags: recipe.ai_creation_data?.tags || [],
                   source: 'ai',
                   generated_at: new Date().toISOString(),
-                  model_name: PLANNER_CONFIG.MODEL_NAME,
-                  generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION
+                  model_name: model_name || PLANNER_CONFIG.MODEL_NAME,
+                  generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
                 })
                 .select()
                 .single();
@@ -259,6 +327,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
               if (!insertError && newRecipe) {
                 recipe.recipe_id = newRecipe.id;
                 aiRecipeMapping.set(normalizedName, newRecipe.id);
+              } else {
+                console.error("Errore inserimento ricetta AI:", insertError);
               }
             }
           }
@@ -266,43 +336,86 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       }
     }
 
-    // Update shopping list recipe_ids with real IDs where names were used
-    const finalShoppingList = result.shopping_list.map(item => ({
-      ...item,
-      recipe_ids: item.recipe_ids.map(rid => {
-        // If it looks like a name (not a UUID), try to find the ID from our mapping
-        const normalizedRid = normalizeRecipeName(rid);
-        if (rid.length > 10 && aiRecipeMapping.has(normalizedRid)) {
-          return aiRecipeMapping.get(normalizedRid)!;
+    // 2. Recalculate shopping list
+    const shoppingListMap = new Map<string, { item: string, quantity: string, recipe_ids: Set<string> }>();
+    
+    // Need ingredients from DB for existing recipes
+    const allRecipeIds = Array.from(new Set(
+      finalWeeklyMenu.flatMap((day: any) => [day.lunch, day.dinner])
+        .flatMap((meal: any) => meal.recipes.map((r: any) => r.recipe_id))
+        .filter((id: string): id is string => !!id && id !== 'new')
+    )) as string[];
+
+    const { data: dbRecipes } = await supabase
+      .from('recipes')
+      .select('id, name, ingredients')
+      .in('id', allRecipeIds);
+
+    const recipeIngredientsLookup = new Map<string, any[]>();
+    dbRecipes?.forEach(r => recipeIngredientsLookup.set(r.id, r.ingredients as any[]));
+
+    for (const day of finalWeeklyMenu) {
+      for (const mealKey of ['lunch', 'dinner'] as const) {
+        const meal = day[mealKey];
+        for (const recipe of meal.recipes) {
+          let ingredients: any[] = [];
+          if (recipe.recipe_id && recipe.recipe_id !== 'new') {
+            ingredients = recipeIngredientsLookup.get(recipe.recipe_id) || [];
+          } else if (recipe.ai_creation_data?.ingredients) {
+            ingredients = recipe.ai_creation_data.ingredients.map((i: string) => ({ name: i }));
+          }
+
+          for (const ing of ingredients) {
+            const ingName = typeof ing === 'string' ? ing : ing.name;
+            if (!ingName) continue;
+            
+            const normalizedIng = normalizeRecipeName(ingName);
+            const existing = shoppingListMap.get(normalizedIng);
+            if (existing) {
+              existing.recipe_ids.add(recipe.recipe_id);
+            } else {
+              shoppingListMap.set(normalizedIng, {
+                item: ingName,
+                quantity: "q.b.",
+                recipe_ids: new Set([recipe.recipe_id])
+              });
+            }
+          }
         }
-        return rid;
-      })
+      }
+    }
+
+    const finalShoppingList = Array.from(shoppingListMap.values()).map(s => ({
+      item: s.item,
+      quantity: s.quantity,
+      recipe_ids: Array.from(s.recipe_ids)
     }));
 
-    // 5. Save to DB
+    // 3. Save to DB
     const { data: savedPlan, error: saveError } = await (supabase
       .from('weekly_plans') as any)
       .insert({
         menu_data: finalWeeklyMenu as any,
         shopping_list: finalShoppingList as any,
-        family_profile_text: extraNotes || "", // Snapshot of user notes as profile context
-        model_name: PLANNER_CONFIG.MODEL_NAME,
-        generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION
+        family_profile_text: notes || "",
+        model_name: model_name || PLANNER_CONFIG.MODEL_NAME,
+        generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
       })
       .select()
       .single();
 
     if (saveError) {
-      console.error("Errore nel salvataggio del piano:", saveError);
-      throw new Error("Errore nel salvataggio del piano");
+      console.error("Errore nel salvataggio finale del piano:", saveError);
+      return { success: false, error: "Errore nel salvataggio del piano nel database." };
     }
 
     revalidatePath('/');
+    revalidatePath('/history');
     return { success: true, plan: savedPlan };
 
   } catch (error) {
-    console.error("Errore durante la generazione del menu:", error);
-    return { success: false, error: "Si è verificato un errore durante la generazione del menu." };
+    console.error("Errore in saveWeeklyPlanAction:", error);
+    return { success: false, error: "Si è verificato un errore durante il salvataggio." };
   }
 }
 
@@ -564,4 +677,13 @@ export async function getWeeklyPlansAction() {
   }
 
   return { success: true, plans: data };
+}
+
+export async function getRecipesAction() {
+  const { data, error } = await supabase.from('recipes').select('*').order('name');
+  if (error) {
+    console.error("Errore nel recupero delle ricette:", error);
+    return { success: false, error: "Impossibile recuperare le ricette" };
+  }
+  return { success: true, data };
 }

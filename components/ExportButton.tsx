@@ -42,8 +42,12 @@ export function ExportButton({ data, filename, type, label }: ExportButtonProps)
         day.dinner.recipes.forEach((r: any) => {
           content += `- ${r.name} (${r.meal_role})\n`
         })
-        if (day.ingredients_used_from_pantry.length > 0) {
-          content += `\n*Dalla dispensa: ${day.ingredients_used_from_pantry.join(', ')}*\n`
+        const pantryItems = [...new Set([
+          ...(day.lunch.ingredients_used_from_pantry || []),
+          ...(day.dinner.ingredients_used_from_pantry || [])
+        ])];
+        if (pantryItems.length > 0) {
+          content += `\n*Dalla dispensa: ${pantryItems.join(', ')}*\n`
         }
         content += `\n`
       })
