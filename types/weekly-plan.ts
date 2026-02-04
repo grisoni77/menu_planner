@@ -23,7 +23,7 @@ export const MealRecipeItemSchema = z.object({
 export type MealRecipeItem = z.infer<typeof MealRecipeItemSchema>;
 
 export const MealPlanSchema = z.object({
-  recipes: z.array(MealRecipeItemSchema).min(1),
+  recipes: z.array(MealRecipeItemSchema),
   notes: z.string().optional(),
 });
 export type MealPlan = z.infer<typeof MealPlanSchema>;

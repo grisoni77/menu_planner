@@ -11,8 +11,11 @@ interface MealDisplayProps {
 }
 
 export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
+  const isEatingOut = meal.recipes.length === 0;
   const classesCovered = meal.recipes.flatMap(r => r.nutritional_classes);
-  const { isComplete, missingClasses } = checkCoverage(classesCovered);
+  const { isComplete, missingClasses } = isEatingOut 
+    ? { isComplete: true, missingClasses: [] } 
+    : checkCoverage(classesCovered);
 
   // Ordina le ricette: prima i 'main', poi i 'side'
   const sortedRecipes = [...meal.recipes].sort((a, b) => {
@@ -39,50 +42,57 @@ export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
         )}
       </div>
       <ul className="space-y-2">
-        {sortedRecipes.map((recipe, idx) => (
-          <li key={idx} className="flex flex-col space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <span className="font-semibold leading-tight">
-                {recipe.name}
-                {recipe.ai_creation_data?.tags?.includes('auto-generato') && (
-                  <span className="text-[10px] text-amber-600 ml-1 font-normal">(auto-aggiunta)</span>
-                )}
-              </span>
-              {recipe.source === 'ai' && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Sparkles className="h-3 w-3 text-purple-500 flex-shrink-0 mt-1 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Generata da AI</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1">
-              <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 uppercase ${
-                recipe.meal_role === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50'
-              }`}>
-                {recipe.meal_role}
-              </Badge>
-              {recipe.nutritional_classes.map(c => (
-                <Badge 
-                  key={c} 
-                  variant="secondary" 
-                  className={`text-[9px] px-1 py-0 h-4 capitalize ${
-                    c === 'veg' ? 'bg-green-100 text-green-700' : 
-                    c === 'carbs' ? 'bg-amber-100 text-amber-700' : 
-                    'bg-red-100 text-red-700'
-                  }`}
-                >
-                  {c}
-                </Badge>
-              ))}
-            </div>
+        {isEatingOut ? (
+          <li className="text-xs text-muted-foreground italic flex items-center gap-1.5 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+            {meal.notes || "Pasto fuori casa"}
           </li>
-        ))}
+        ) : (
+          sortedRecipes.map((recipe, idx) => (
+            <li key={idx} className="flex flex-col space-y-1">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-semibold leading-tight">
+                  {recipe.name}
+                  {recipe.ai_creation_data?.tags?.includes('auto-generato') && (
+                    <span className="text-[10px] text-amber-600 ml-1 font-normal">(auto-aggiunta)</span>
+                  )}
+                </span>
+                {recipe.source === 'ai' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Sparkles className="h-3 w-3 text-purple-500 flex-shrink-0 mt-1 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Generata da AI</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="outline" className={`text-[9px] px-1 py-0 h-4 uppercase ${
+                  recipe.meal_role === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50'
+                }`}>
+                  {recipe.meal_role}
+                </Badge>
+                {recipe.nutritional_classes.map(c => (
+                  <Badge 
+                    key={c} 
+                    variant="secondary" 
+                    className={`text-[9px] px-1 py-0 h-4 capitalize ${
+                      c === 'veg' ? 'bg-green-100 text-green-700' : 
+                      c === 'carbs' ? 'bg-amber-100 text-amber-700' : 
+                      'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {c}
+                  </Badge>
+                ))}
+              </div>
+            </li>
+          ))
+        )}
       </ul>
       {missingClasses.length > 0 && (
         <p className="text-[10px] text-amber-600 italic">

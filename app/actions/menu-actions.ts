@@ -65,14 +65,15 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       ${extraNotes}
 
       ISTRUZIONI VINCOLANTI:
-      1. Per ogni ricetta selezionata dal DATABASE, devi assolutamente restituire il suo "recipe_id" originale.
-      2. Se non ci sono ricette adatte nel database, inventa nuove ricette semplici coerenti con la dispensa.
-      3. Per le ricette inventate (AI):
+      1. Se l'utente indica esplicitamente che un pasto è fuori casa (es. "mangiamo fuori", "pasto fuori"), lascia l'array "recipes" VUOTO per quel pasto e usa il campo "notes" per indicare "Pasto fuori casa".
+      2. Per ogni ricetta selezionata dal DATABASE, devi assolutamente restituire il suo "recipe_id" originale.
+      3. Se non ci sono ricette adatte nel database, inventa nuove ricette semplici coerenti con la dispensa.
+      4. Per le ricette inventate (AI):
          - Imposta "recipe_id" a "new"
          - Imposta "source" a "ai"
          - Fornisci "ai_creation_data" con "ingredients" e "tags" (es. veloce, economico, forno).
-      4. Genera una shopping_list aggregata per ingrediente. Per ogni voce della shopping list, includi gli ID delle ricette che richiedono quell'ingrediente. Se la ricetta è nuova, usa il nome della ricetta come riferimento temporaneo nell'array recipe_ids.
-      5. Rispondi in Italiano.
+      5. Genera una shopping_list aggregata per ingrediente. Per ogni voce della shopping list, includi gli ID delle ricette che richiedono quell'ingrediente. Se la ricetta è nuova, usa il nome della ricetta come riferimento temporaneo nell'array recipe_ids.
+      6. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output
@@ -119,6 +120,9 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
 
     for (const day of finalWeeklyMenu) {
       for (const meal of [day.lunch, day.dinner]) {
+        // Skip validation and processing if no recipes are planned (e.g., eating out)
+        if (meal.recipes.length === 0) continue;
+
         // 1. Handle over-frequency recipes (Main or Side)
         for (let i = 0; i < meal.recipes.length; i++) {
           const r = meal.recipes[i];
