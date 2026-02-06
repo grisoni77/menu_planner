@@ -1,8 +1,9 @@
 export const PLANNER_CONFIG = {
   PROMPT_VERSION: 'planner-v2.0',
   // MODEL_NAME: 'llama-3.3-70b-versatile',
-  MODEL_NAME: 'moonshotai/kimi-k2-instruct-0905', // ottimo
+  // MODEL_NAME: 'moonshotai/kimi-k2-instruct-0905', // ottimo
   // MODEL_NAME: 'qwen/qwen3-32b', // va in errore
+  MODEL_NAME: 'openai/gpt-oss-120b',
   REQUIRED_NUTRITIONAL_CLASSES: ['veg', 'carbs', 'protein'] as const,
   MAX_RECIPE_FREQUENCY_PER_WEEK: 2,
   GENERIC_FALLBACKS: {

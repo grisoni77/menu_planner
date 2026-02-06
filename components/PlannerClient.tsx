@@ -206,13 +206,13 @@ export default function PlannerClient() {
                   title="Pranzo" 
                   meal={day.lunch} 
                   onChange={(m) => updateDraftMeal(day.day, 'lunch', m)}
-                  onAddRecipe={() => handleAddRecipe(day.day, 'lunch', 'main')}
+                  onAddRecipe={(role) => handleAddRecipe(day.day, 'lunch', role)}
                 />
                 <MealEditor 
                   title="Cena" 
                   meal={day.dinner} 
                   onChange={(m) => updateDraftMeal(day.day, 'dinner', m)}
-                  onAddRecipe={() => handleAddRecipe(day.day, 'dinner', 'main')}
+                  onAddRecipe={(role) => handleAddRecipe(day.day, 'dinner', role)}
                 />
               </div>
             ))}
