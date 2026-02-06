@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { generateMenuAction, saveWeeklyPlanAction } from "@/app/actions/menu-actions";
-import { WeeklyPlan, DayMenu, ShoppingItem, MealRecipeItem, MealPlan } from "@/types/weekly-plan";
+import { DayMenu, ShoppingItem, MealRecipeItem, MealPlan } from "@/types/weekly-plan";
 import { Loader2, CheckCircle2, Download, Trash2, Save, X, AlertTriangle, Info } from "lucide-react";
 import { DayCard } from "./DayCard";
 import { ExportButton } from "./ExportButton";
@@ -15,11 +15,18 @@ import { RecipePickerDialog } from "./RecipePickerDialog";
 import { checkCoverage } from "@/lib/planner-utils";
 import { Badge } from "./ui/badge";
 
+type SavedPlan = {
+  weekly_menu: DayMenu[];
+  shopping_list: ShoppingItem[];
+  summary_note: string;
+  model_name?: string;
+};
+
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [plan, setPlan] = useState<(WeeklyPlan & { model_name?: string }) | null>(null);
+  const [plan, setPlan] = useState<SavedPlan | null>(null);
 
   const { draft, setDraft, clearDraft, isReady } = useLocalStorageDraft('menu_planner:draft_weekly_plan:v1');
 
@@ -40,7 +47,6 @@ export default function PlannerClient() {
           saved_at: new Date().toISOString(),
           notes: notes,
           weekly_menu: result.draft.weekly_menu as DayMenu[],
-          shopping_list: result.draft.shopping_list as ShoppingItem[],
           summary_note: result.draft.summary_note,
           model_name: result.draft.model_name,
           generation_prompt_version: result.draft.generation_prompt_version,
@@ -68,7 +74,7 @@ export default function PlannerClient() {
           shopping_list: result.plan.shopping_list as ShoppingItem[],
           summary_note: "Piano salvato con successo!",
           model_name: result.plan.model_name
-        } as WeeklyPlan & { model_name?: string });
+        } as SavedPlan);
         clearDraft();
         alert("Piano salvato con successo!");
       } else {

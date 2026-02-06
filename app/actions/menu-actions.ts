@@ -73,8 +73,7 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
          - Imposta "recipe_id" a "new"
          - Imposta "source" a "ai"
          - Fornisci "ai_creation_data" con "ingredients" e "tags" (es. veloce, economico, forno).
-      6. Genera una shopping_list aggregata per ingrediente. Per ogni voce della shopping list, includi gli ID delle ricette che richiedono quell'ingrediente. Se la ricetta è nuova, usa il nome della ricetta come riferimento temporaneo nell'array recipe_ids.
-      7. Rispondi in Italiano.
+      6. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output
@@ -250,7 +249,6 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       success: true, 
       draft: { 
         weekly_menu: finalWeeklyMenu, 
-        shopping_list: result.shopping_list, 
         summary_note: result.summary_note,
         model_name: PLANNER_CONFIG.MODEL_NAME,
         generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION,
