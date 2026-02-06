@@ -8,16 +8,18 @@ interface MealEditorProps {
   title: string;
   meal: MealPlan;
   onChange: (updatedMeal: MealPlan) => void;
-  onAddRecipe: () => void;
+  onAddRecipe: (role: 'main' | 'side') => void;
 }
 
 export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorProps) {
-  const isEatingOut = meal.recipes.length === 0;
+  const isEatingOutMode = meal.recipes.length === 0 && meal.notes?.toLowerCase().includes("pasto fuori casa");
 
   const toggleEatingOut = () => {
-    if (isEatingOut) {
+    if (isEatingOutMode) {
+      // Se siamo in modalità "fuori casa", la disattiviamo
       onChange({ ...meal, recipes: [], notes: "" });
     } else {
+      // Altrimenti (se abbiamo ricette O se siamo in stato di errore vuoto), attiviamo "fuori casa"
       onChange({ ...meal, recipes: [], notes: "Pasto fuori casa" });
     }
   };
@@ -36,7 +38,7 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
           <Tooltip>
             <TooltipTrigger asChild>
               <UIButton 
-                variant={isEatingOut ? "default" : "outline"} 
+                variant={isEatingOutMode ? "default" : "outline"} 
                 size="icon" 
                 className="h-7 w-7" 
                 onClick={toggleEatingOut}
@@ -45,13 +47,13 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
               </UIButton>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{isEatingOut ? "Rimuovi pasto fuori casa" : "Imposta come pasto fuori casa"}</p>
+              <p>{isEatingOutMode ? "Rimuovi pasto fuori casa" : "Imposta come pasto fuori casa"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
 
-      {isEatingOut ? (
+      {isEatingOutMode ? (
         <div className="text-xs text-muted-foreground italic py-2 px-1 bg-slate-50 rounded border border-dashed flex items-center justify-center">
           Pasto fuori casa
         </div>
@@ -92,14 +94,24 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
               </div>
             </li>
           ))}
-          <UIButton 
-            variant="ghost" 
-            size="sm" 
-            className="w-full h-8 border-dashed border-2 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center gap-1 text-[11px]"
-            onClick={onAddRecipe}
-          >
-            <Plus className="h-3 w-3" /> Aggiungi ricetta
-          </UIButton>
+          <div className="flex gap-1">
+            <UIButton 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 h-8 border-dashed border-2 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center gap-1 text-[10px]"
+              onClick={() => onAddRecipe('main')}
+            >
+              <Plus className="h-3 w-3" /> Main
+            </UIButton>
+            <UIButton 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 h-8 border-dashed border-2 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center gap-1 text-[10px]"
+              onClick={() => onAddRecipe('side')}
+            >
+              <Plus className="h-3 w-3" /> Side
+            </UIButton>
+          </div>
         </ul>
       )}
     </div>
