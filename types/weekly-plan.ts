@@ -45,7 +45,6 @@ export type DayMenu = z.infer<typeof DayMenuSchema>;
 
 export const WeeklyPlanSchema = z.object({
   weekly_menu: z.array(DayMenuSchema),
-  shopping_list: z.array(ShoppingItemSchema),
   summary_note: z.string().describe("Breve commento dell'AI sul menu creato"),
 });
 
@@ -56,7 +55,6 @@ export const WeeklyPlanDraftSchema = z.object({
   saved_at: z.string(), // ISO string
   notes: z.string(), // Le note originali dell'utente
   weekly_menu: z.array(DayMenuSchema),
-  shopping_list: z.array(ShoppingItemSchema),
   summary_note: z.string(),
   model_name: z.string().optional(),
   generation_prompt_version: z.string().optional(),
