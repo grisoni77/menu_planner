@@ -26,6 +26,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [selectedNutritional, setSelectedNutritional] = useState<string[]>([])
+  const [selectedSeasons, setSelectedSeasons] = useState<string[]>([])
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -51,6 +52,14 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     )
   }
 
+  const toggleSeason = (season: string) => {
+    setSelectedSeasons(prev =>
+      prev.includes(season)
+        ? prev.filter(s => s !== season)
+        : [...prev, season]
+    )
+  }
+
   const filteredRecipes = initialRecipes.filter(recipe => {
     const search = recipeSearch.toLowerCase()
     const nameMatch = recipe.name.toLowerCase().includes(search)
@@ -68,7 +77,13 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     const nutritionalMatch = selectedNutritional.length === 0 ||
       selectedNutritional.every(cls => recipe.nutritional_classes?.includes(cls))
 
-    return nameMatch && tagsMatch && roleMatch && nutritionalMatch
+    // Filtro per stagionalità (OR - se selezionate più stagioni, mostra ricette valide per almeno una di esse)
+    // Se la ricetta non ha stagioni (array vuoto), è valida per tutte le stagioni.
+    const seasonMatch = selectedSeasons.length === 0 ||
+      recipe.seasons?.length === 0 ||
+      selectedSeasons.some(season => recipe.seasons?.includes(season))
+
+    return nameMatch && tagsMatch && roleMatch && nutritionalMatch && seasonMatch
   })
 
   const filteredPantry = initialPantryItems.filter(item => {
@@ -165,6 +180,21 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       {cls.label}
                     </Badge>
                   ))}
+                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Stag:</span>
+                  {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
+                    <Badge 
+                      key={season}
+                      variant={selectedSeasons.includes(season) ? "default" : "outline"}
+                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                        selectedSeasons.includes(season) 
+                          ? 'bg-blue-600 hover:bg-blue-700' 
+                          : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
+                      }`}
+                      onClick={() => toggleSeason(season)}
+                    >
+                      {season}
+                    </Badge>
+                  ))}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -189,7 +219,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
               </div>
             </CardHeader>
             <CardContent>
-              {(selectedTags.length > 0 || selectedRoles.length > 0 || selectedNutritional.length > 0) && (
+              {(selectedTags.length > 0 || selectedRoles.length > 0 || selectedNutritional.length > 0 || selectedSeasons.length > 0) && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {selectedRoles.map(role => (
                     <Badge 
@@ -234,6 +264,21 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       </Badge>
                     )
                   })}
+                  {selectedSeasons.map(season => (
+                    <Badge 
+                      key={season} 
+                      variant="secondary" 
+                      className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 border-blue-200"
+                    >
+                      Stagione: {season}
+                      <button 
+                        onClick={() => toggleSeason(season)}
+                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
                   {selectedTags.map(tag => (
                     <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                       {tag}
@@ -267,9 +312,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onTagClick={toggleTag}
                     onRoleClick={toggleRole}
                     onNutritionalClick={toggleNutritional}
+                    onSeasonClick={toggleSeason}
                     selectedTags={selectedTags}
                     selectedRoles={selectedRoles}
                     selectedNutritional={selectedNutritional}
+                    selectedSeasons={selectedSeasons}
                   />
                 ))}
               </div>

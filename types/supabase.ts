@@ -69,6 +69,7 @@ export type Database = {
           model_name: string | null
           name: string
           nutritional_classes: Database["public"]["Enums"]["nutritional_class"][]
+          seasons: Database["public"]["Enums"]["season"][]
           source: Database["public"]["Enums"]["recipe_source"]
           tags: string[] | null
         }
@@ -82,6 +83,7 @@ export type Database = {
           model_name?: string | null
           name: string
           nutritional_classes?: Database["public"]["Enums"]["nutritional_class"][]
+          seasons?: Database["public"]["Enums"]["season"][]
           source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
         }
@@ -95,6 +97,7 @@ export type Database = {
           model_name?: string | null
           name?: string
           nutritional_classes?: Database["public"]["Enums"]["nutritional_class"][]
+          seasons?: Database["public"]["Enums"]["season"][]
           source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
         }
@@ -141,6 +144,7 @@ export type Database = {
       nutritional_class: "veg" | "carbs" | "protein"
       recipe_role: "main" | "side"
       recipe_source: "user" | "ai"
+      season: "Primavera" | "Estate" | "Autunno" | "Inverno"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -274,6 +278,7 @@ export const Constants = {
       nutritional_class: ["veg", "carbs", "protein"],
       recipe_role: ["main", "side"],
       recipe_source: ["user", "ai"],
+      season: ["Primavera", "Estate", "Autunno", "Inverno"],
     },
   },
 } as const

@@ -9,6 +9,9 @@ export type MealRole = z.infer<typeof MealRoleEnum>;
 export const RecipeSourceEnum = z.enum(['user', 'ai']);
 export type RecipeSource = z.infer<typeof RecipeSourceEnum>;
 
+export const SeasonEnum = z.enum(['Primavera', 'Estate', 'Autunno', 'Inverno']);
+export type Season = z.infer<typeof SeasonEnum>;
+
 export const MealRecipeItemSchema = z.object({
   recipe_id: z.string().describe("ID della ricetta nel database. Se è una nuova ricetta AI, lascia vuoto o metti 'new'."),
   name: z.string(),

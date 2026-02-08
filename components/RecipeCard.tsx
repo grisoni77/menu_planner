@@ -6,7 +6,7 @@ import { Trash2, Tag, Sparkles, Info } from "lucide-react"
 import { RecipeFormModal } from "./RecipeFormModal"
 import { deleteRecipeAction } from "@/app/actions/menu-actions"
 import { Badge } from "@/components/ui/badge"
-import { NutritionalClass, MealRole, RecipeSource } from "@/types/weekly-plan"
+import { NutritionalClass, MealRole, RecipeSource, Season } from "@/types/weekly-plan"
 
 interface RecipeCardProps {
   recipe: {
@@ -17,13 +17,16 @@ interface RecipeCardProps {
     nutritional_classes?: NutritionalClass[]
     meal_role?: MealRole
     source?: RecipeSource
+    seasons?: Season[]
   }
   onTagClick?: (tag: string) => void
   onRoleClick?: (role: string) => void
   onNutritionalClick?: (cls: string) => void
+  onSeasonClick?: (season: string) => void
   selectedTags?: string[]
   selectedRoles?: string[]
   selectedNutritional?: string[]
+  selectedSeasons?: string[]
 }
 
 export function RecipeCard({ 
@@ -31,9 +34,11 @@ export function RecipeCard({
   onTagClick, 
   onRoleClick,
   onNutritionalClick,
+  onSeasonClick,
   selectedTags = [],
   selectedRoles = [],
-  selectedNutritional = []
+  selectedNutritional = [],
+  selectedSeasons = []
 }: RecipeCardProps) {
   const isAI = recipe.source === 'ai'
   const hasNoClasses = !recipe.nutritional_classes || recipe.nutritional_classes.length === 0
@@ -81,6 +86,22 @@ export function RecipeCard({
                     className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${colorClass}`}
                   >
                     {cls}
+                  </button>
+                )
+              })}
+              {recipe.seasons?.map(season => {
+                const isSelected = selectedSeasons.includes(season)
+                return (
+                  <button
+                    key={season}
+                    onClick={() => onSeasonClick?.(season)}
+                    className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${
+                      isSelected 
+                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                        : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600 border-blue-200'
+                    }`}
+                  >
+                    {season}
                   </button>
                 )
               })}

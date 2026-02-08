@@ -10,6 +10,7 @@ import { normalizeRecipeName, PLANNER_CONFIG, checkCoverage } from "@/lib/planne
 type RecipeRole = Database['public']['Enums']['recipe_role'];
 type NutritionalClassDB = Database['public']['Enums']['nutritional_class'];
 type RecipeSourceDB = Database['public']['Enums']['recipe_source'];
+type SeasonDB = Database['public']['Enums']['season'];
 
 export async function generateMenuAction(extraNotes: string) {
   try {
@@ -455,6 +456,7 @@ export async function addRecipeAction(formData: FormData) {
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
+    const seasons = formData.getAll('seasons') as SeasonDB[];
     const meal_role = (formData.get('meal_role') as RecipeRole) || 'main';
     const nutritional_classes = formData.getAll('nutritional_classes') as NutritionalClassDB[];
     
@@ -465,6 +467,7 @@ export async function addRecipeAction(formData: FormData) {
         name, 
         ingredients: ingredients as any, 
         tags,
+        seasons,
         meal_role,
         nutritional_classes,
         source: 'user' as RecipeSourceDB
@@ -481,13 +484,14 @@ export async function updateRecipeAction(id: string, formData: FormData) {
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
+    const seasons = formData.getAll('seasons') as SeasonDB[];
     const meal_role = (formData.get('meal_role') as RecipeRole);
     const nutritional_classes = formData.getAll('nutritional_classes') as NutritionalClassDB[];
     
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    const updateData: any = { name, ingredients, tags };
+    const updateData: any = { name, ingredients, tags, seasons };
     if (meal_role) updateData.meal_role = meal_role;
     updateData.nutritional_classes = nutritional_classes;
 

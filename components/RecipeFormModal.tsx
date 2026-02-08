@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { NutritionalClass, MealRole, RecipeSource } from '@/types/weekly-plan'
+import { NutritionalClass, MealRole, RecipeSource, Season } from '@/types/weekly-plan'
 
 interface RecipeFormModalProps {
   recipe?: {
@@ -31,6 +31,7 @@ interface RecipeFormModalProps {
     nutritional_classes?: NutritionalClass[]
     meal_role?: MealRole
     source?: RecipeSource
+    seasons?: Season[]
   }
 }
 
@@ -40,15 +41,29 @@ const NUTRITIONAL_CLASSES: { value: NutritionalClass; label: string }[] = [
   { value: 'protein', label: 'Proteine' },
 ]
 
+const SEASONS: { value: Season; label: string }[] = [
+  { value: 'Primavera', label: 'Primavera' },
+  { value: 'Estate', label: 'Estate' },
+  { value: 'Autunno', label: 'Autunno' },
+  { value: 'Inverno', label: 'Inverno' },
+]
+
 export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedClasses, setSelectedClasses] = useState<NutritionalClass[]>(recipe?.nutritional_classes || [])
+  const [selectedSeasons, setSelectedSeasons] = useState<Season[]>(recipe?.seasons || [])
   const isEditing = !!recipe
 
   const toggleClass = (cls: NutritionalClass) => {
     setSelectedClasses(prev => 
       prev.includes(cls) ? prev.filter(c => c !== cls) : [...prev, cls]
+    )
+  }
+
+  const toggleSeason = (season: Season) => {
+    setSelectedSeasons(prev => 
+      prev.includes(season) ? prev.filter(s => s !== season) : [...prev, season]
     )
   }
 
@@ -62,6 +77,11 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
       formData.append('nutritional_classes', cls)
     })
 
+    // Aggiungi le stagioni selezionate
+    selectedSeasons.forEach(season => {
+      formData.append('seasons', season)
+    })
+
     let result;
     if (isEditing && recipe) {
       result = await updateRecipeAction(recipe.id, formData)
@@ -73,7 +93,10 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
       setError(result.error || "Si è verificato un errore")
     } else {
       setOpen(false)
-      if (!isEditing) setSelectedClasses([])
+      if (!isEditing) {
+        setSelectedClasses([])
+        setSelectedSeasons([])
+      }
     }
   }
 
@@ -81,7 +104,10 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
     <Dialog open={open} onOpenChange={(v) => { 
       setOpen(v); 
       if(!v) setError(null);
-      if(v && recipe) setSelectedClasses(recipe.nutritional_classes || [])
+      if(v && recipe) {
+        setSelectedClasses(recipe.nutritional_classes || [])
+        setSelectedSeasons(recipe.seasons || [])
+      }
     }}>
       <DialogTrigger asChild>
         {isEditing ? (
@@ -146,6 +172,27 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
                       className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
                       {cls.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Stagionalità (opzionale)</label>
+              <div className="flex flex-col gap-2 border rounded-md p-3">
+                {SEASONS.map((season) => (
+                  <div key={season.value} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`season-${season.value}`} 
+                      checked={selectedSeasons.includes(season.value)}
+                      onCheckedChange={() => toggleSeason(season.value)}
+                    />
+                    <label 
+                      htmlFor={`season-${season.value}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {season.label}
                     </label>
                   </div>
                 ))}
