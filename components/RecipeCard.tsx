@@ -19,10 +19,22 @@ interface RecipeCardProps {
     source?: RecipeSource
   }
   onTagClick?: (tag: string) => void
+  onRoleClick?: (role: string) => void
+  onNutritionalClick?: (cls: string) => void
   selectedTags?: string[]
+  selectedRoles?: string[]
+  selectedNutritional?: string[]
 }
 
-export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCardProps) {
+export function RecipeCard({ 
+  recipe, 
+  onTagClick, 
+  onRoleClick,
+  onNutritionalClick,
+  selectedTags = [],
+  selectedRoles = [],
+  selectedNutritional = []
+}: RecipeCardProps) {
   const isAI = recipe.source === 'ai'
   const hasNoClasses = !recipe.nutritional_classes || recipe.nutritional_classes.length === 0
 
@@ -42,15 +54,36 @@ export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCard
             </div>
             <div className="flex gap-1 flex-wrap">
               {recipe.meal_role && (
-                <Badge variant="secondary" className="text-[10px] uppercase tracking-wider px-1.5 py-0 h-4">
+                <button
+                  onClick={() => onRoleClick?.(recipe.meal_role!)}
+                  className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${
+                    selectedRoles.includes(recipe.meal_role)
+                      ? (recipe.meal_role === 'main' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200')
+                      : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+                  }`}
+                >
                   {recipe.meal_role}
-                </Badge>
+                </button>
               )}
-              {recipe.nutritional_classes?.map(cls => (
-                <Badge key={cls} variant="outline" className="text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 bg-white">
-                  {cls}
-                </Badge>
-              ))}
+              {recipe.nutritional_classes?.map(cls => {
+                const isSelected = selectedNutritional.includes(cls)
+                const colors = {
+                  veg: isSelected ? 'bg-green-50 text-green-700 border-green-200' : 'hover:bg-green-50 hover:text-green-700 text-green-600 border-green-200',
+                  carbs: isSelected ? 'bg-amber-50 text-amber-700 border-amber-200' : 'hover:bg-amber-50 hover:text-amber-700 text-amber-600 border-amber-200',
+                  protein: isSelected ? 'bg-red-50 text-red-700 border-red-200' : 'hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200'
+                }
+                const colorClass = colors[cls as keyof typeof colors] || 'bg-white text-muted-foreground border-input'
+                
+                return (
+                  <button
+                    key={cls}
+                    onClick={() => onNutritionalClick?.(cls)}
+                    className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${colorClass}`}
+                  >
+                    {cls}
+                  </button>
+                )
+              })}
             </div>
           </div>
           <div className="flex gap-1">
@@ -83,7 +116,7 @@ export function RecipeCard({ recipe, onTagClick, selectedTags = [] }: RecipeCard
                   <button
                     key={tag}
                     onClick={() => onTagClick?.(tag)}
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                    className={`cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
                       isSelected 
                         ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'

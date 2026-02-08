@@ -192,7 +192,15 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
               {(selectedTags.length > 0 || selectedRoles.length > 0 || selectedNutritional.length > 0) && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {selectedRoles.map(role => (
-                    <Badge key={role} variant="secondary" className="flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 border-indigo-200">
+                    <Badge 
+                      key={role} 
+                      variant="secondary" 
+                      className={`flex items-center gap-1 px-3 py-1 ${
+                        role === 'main' 
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
                       Tipo: {role}
                       <button 
                         onClick={() => toggleRole(role)}
@@ -202,17 +210,30 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       </button>
                     </Badge>
                   ))}
-                  {selectedNutritional.map(cls => (
-                    <Badge key={cls} variant="secondary" className="flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-700">
-                      Nutr: {cls}
-                      <button 
-                        onClick={() => toggleNutritional(cls)}
-                        className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  {selectedNutritional.map(cls => {
+                    const colors = {
+                      veg: 'bg-green-50 text-green-700 border-green-200',
+                      carbs: 'bg-amber-50 text-amber-700 border-amber-200',
+                      protein: 'bg-red-50 text-red-700 border-red-200'
+                    }
+                    const colorClass = colors[cls as keyof typeof colors] || 'bg-slate-100 text-slate-700 border-slate-200'
+                    
+                    return (
+                      <Badge 
+                        key={cls} 
+                        variant="secondary" 
+                        className={`flex items-center gap-1 px-3 py-1 ${colorClass}`}
                       >
-                        <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </button>
-                    </Badge>
-                  ))}
+                        Nutr: {cls}
+                        <button 
+                          onClick={() => toggleNutritional(cls)}
+                          className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                        </button>
+                      </Badge>
+                    )
+                  })}
                   {selectedTags.map(tag => (
                     <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                       {tag}
@@ -244,7 +265,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     key={recipe.id} 
                     recipe={recipe} 
                     onTagClick={toggleTag}
+                    onRoleClick={toggleRole}
+                    onNutritionalClick={toggleNutritional}
                     selectedTags={selectedTags}
+                    selectedRoles={selectedRoles}
+                    selectedNutritional={selectedNutritional}
                   />
                 ))}
               </div>
