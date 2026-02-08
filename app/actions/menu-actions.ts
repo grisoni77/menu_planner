@@ -548,16 +548,19 @@ export async function importRecipesAction(formData: FormData) {
       const tagsRaw = parts[2] ? parts[2].replace(/^"|"$/g, '').trim() : "";
       const mealRoleRaw = parts[3] ? parts[3].replace(/^"|"$/g, '').toLowerCase().trim() : "main";
       const classesRaw = parts[4] ? parts[4].replace(/^"|"$/g, '').toLowerCase().trim() : "";
+      const seasonsRaw = parts[5] ? parts[5].replace(/^"|"$/g, '').trim() : "";
 
       const ingredients = ingredientsRaw.split(/[;,]/).map(ing => ({ name: ing.trim() })).filter(ing => ing.name);
       const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
       const meal_role = (mealRoleRaw === 'side' || mealRoleRaw === 'main') ? (mealRoleRaw as RecipeRole) : 'main';
       const nutritional_classes = classesRaw ? classesRaw.split(',').map(c => c.trim()).filter(c => ['veg', 'carbs', 'protein'].includes(c)) as NutritionalClassDB[] : [];
+      const seasons = seasonsRaw ? seasonsRaw.split(',').map(s => s.trim()).filter(s => ['Primavera', 'Estate', 'Autunno', 'Inverno'].includes(s)) as SeasonDB[] : [];
 
       recipesToInsert.push({ 
         name, 
         ingredients: ingredients as any, 
         tags, 
+        seasons,
         meal_role, 
         nutritional_classes,
         source: 'user' as RecipeSourceDB

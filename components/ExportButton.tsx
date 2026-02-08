@@ -76,8 +76,8 @@ export function ExportButton({ data, filename, type, label }: ExportButtonProps)
     let csvContent = ""
     
     if (type === 'recipes') {
-      // Header: nome,ingredienti,tag,ruolo,classi
-      csvContent = "nome,ingredienti,tag,ruolo,classi\n"
+      // Header: nome,ingredienti,tag,ruolo,classi,stagioni
+      csvContent = "nome,ingredienti,tag,ruolo,classi,stagioni\n"
       data.forEach(recipe => {
         const name = `"${recipe.name.replace(/"/g, '""')}"`
         const ingredientsArr = Array.isArray(recipe.ingredients) 
@@ -87,8 +87,9 @@ export function ExportButton({ data, filename, type, label }: ExportButtonProps)
         const tags = `"${(recipe.tags || []).join(', ').replace(/"/g, '""')}"`
         const role = `"${recipe.meal_role || 'main'}"`
         const classes = `"${(recipe.nutritional_classes || []).join(', ')}"`
+        const seasons = `"${(recipe.seasons || []).join(', ')}"`
         
-        csvContent += `${name},${ingredients},${tags},${role},${classes}\n`
+        csvContent += `${name},${ingredients},${tags},${role},${classes},${seasons}\n`
       })
     } else {
       // Header: nome,quantità,categoria
