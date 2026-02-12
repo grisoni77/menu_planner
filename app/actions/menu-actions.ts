@@ -1,6 +1,7 @@
 'use server'
 
-import { ChatGroq } from "@langchain/groq";
+import { generateObject } from "ai";
+import { createModel, getAvailableProviders } from "@/lib/ai/providers";
 import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
@@ -12,7 +13,11 @@ type NutritionalClassDB = Database['public']['Enums']['nutritional_class'];
 type RecipeSourceDB = Database['public']['Enums']['recipe_source'];
 type SeasonDB = Database['public']['Enums']['season'];
 
-export async function generateMenuAction(extraNotes: string) {
+export async function getAvailableModelsAction() {
+  return getAvailableProviders();
+}
+
+export async function generateMenuAction(extraNotes: string, modelId: string) {
   try {
     // 1. Data Fetching
     const { data: pantryItems } = await supabase.from('pantry_items').select('*');
@@ -101,13 +106,16 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       7. Rispondi in Italiano.
     `;
 
-    // 3. LLM Call with Structured Output
-    const model = new ChatGroq({
-      apiKey: process.env.GROQ_API_KEY,
-      model: PLANNER_CONFIG.MODEL_NAME,
-    }).withStructuredOutput(WeeklyPlanSchema);
+    // 3. LLM Call with Structured Output (Vercel AI SDK)
+    const [providerId, ...rest] = modelId.split(":");
+    const modelName = rest.join(":");
+    const model = await createModel(providerId, modelName);
 
-    const result = await model.invoke(prompt);
+    const { object: result } = await generateObject({
+      model,
+      schema: WeeklyPlanSchema,
+      prompt,
+    });
     console.info("LLM Result:", result);
 
     // 4. Process AI Recipes & Normalize IDs
@@ -266,7 +274,7 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       draft: { 
         weekly_menu: finalWeeklyMenu, 
         summary_note: result.summary_note,
-        model_name: PLANNER_CONFIG.MODEL_NAME,
+        model_name: modelId,
         generation_prompt_version: PLANNER_CONFIG.PROMPT_VERSION,
         notes: extraNotes || ""
       } 
@@ -332,7 +340,7 @@ export async function saveWeeklyPlanAction(payload: any) {
                   tags: recipe.ai_creation_data?.tags || [],
                   source: 'ai',
                   generated_at: new Date().toISOString(),
-                  model_name: model_name || PLANNER_CONFIG.MODEL_NAME,
+                  model_name: model_name || 'unknown',
                   generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
                 })
                 .select()
@@ -412,7 +420,7 @@ export async function saveWeeklyPlanAction(payload: any) {
         menu_data: finalWeeklyMenu as any,
         shopping_list: finalShoppingList as any,
         family_profile_text: notes || "",
-        model_name: model_name || PLANNER_CONFIG.MODEL_NAME,
+        model_name: model_name || 'unknown',
         generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
       })
       .select()
