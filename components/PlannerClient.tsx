@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { generateMenuAction, saveWeeklyPlanAction } from "@/app/actions/menu-actions";
+import { generateMenuAction, saveWeeklyPlanAction, getAvailableModelsAction } from "@/app/actions/menu-actions";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DayMenu, ShoppingItem, MealRecipeItem, MealPlan } from "@/types/weekly-plan";
 import { Loader2, CheckCircle2, Download, Trash2, Save, X, AlertTriangle, Info } from "lucide-react";
 import { DayCard } from "./DayCard";
@@ -22,13 +23,42 @@ type SavedPlan = {
   model_name?: string;
 };
 
+type AvailableProvider = {
+  id: string;
+  label: string;
+  models: { id: string; label: string }[];
+};
+
+const MODEL_STORAGE_KEY = 'menu_planner:selected_model';
+
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<SavedPlan | null>(null);
+  const [availableProviders, setAvailableProviders] = useState<AvailableProvider[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
 
   const { draft, setDraft, clearDraft, isReady } = useLocalStorageDraft('menu_planner:draft_weekly_plan:v1');
+
+  useEffect(() => {
+    getAvailableModelsAction().then((providers) => {
+      setAvailableProviders(providers);
+      const saved = localStorage.getItem(MODEL_STORAGE_KEY);
+      // Validate that saved model still exists in available providers
+      const allModelIds = providers.flatMap(p => p.models.map(m => `${p.id}:${m.id}`));
+      if (saved && allModelIds.includes(saved)) {
+        setSelectedModel(saved);
+      } else if (allModelIds.length > 0) {
+        setSelectedModel(allModelIds[0]);
+      }
+    });
+  }, []);
+
+  const handleModelChange = (value: string) => {
+    setSelectedModel(value);
+    localStorage.setItem(MODEL_STORAGE_KEY, value);
+  };
 
   // State for recipe picker
   const [pickerConfig, setPickerConfig] = useState<{
@@ -40,7 +70,7 @@ export default function PlannerClient() {
   async function handleGenerate() {
     setLoading(true);
     try {
-      const result = await generateMenuAction(notes);
+      const result = await generateMenuAction(notes, selectedModel);
       if (result.success && result.draft) {
         setDraft({
           draft_version: 1,
@@ -151,13 +181,35 @@ export default function PlannerClient() {
             <CardDescription>Inserisci le tue preferenze per la settimana</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Textarea 
+            <Textarea
               placeholder="Esempio: Venerdì ho ospiti a cena, evita il piccante..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="min-h-[100px]"
             />
-            <Button onClick={handleGenerate} disabled={loading} className="w-full h-12 text-lg">
+            {availableProviders.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">Modello AI</label>
+                <Select value={selectedModel} onValueChange={handleModelChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona modello..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableProviders.map((provider) => (
+                      <SelectGroup key={provider.id}>
+                        <SelectLabel>{provider.label}</SelectLabel>
+                        {provider.models.map((model) => (
+                          <SelectItem key={`${provider.id}:${model.id}`} value={`${provider.id}:${model.id}`}>
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Button onClick={handleGenerate} disabled={loading || !selectedModel} className="w-full h-12 text-lg">
               {loading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generazione in corso...</> : "Genera Menu Settimanale"}
             </Button>
           </CardContent>
