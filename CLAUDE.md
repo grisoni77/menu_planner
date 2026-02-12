@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI-powered weekly menu planner using LangChain + Groq LLM with structured output (Zod schemas) to generate balanced meal plans based on available pantry items and recipes. Built with Next.js 15 App Router, TypeScript, Supabase (local PostgreSQL), and Tailwind CSS.
+AI-powered weekly menu planner using Vercel AI SDK (`ai`) with structured output (Zod schemas) and multi-provider support (Groq, OpenAI) to generate balanced meal plans based on available pantry items and recipes. Built with Next.js 15 App Router, TypeScript, Supabase (local PostgreSQL), and Tailwind CSS.
 
 **Core Feature**: One-shot menu generation with nutritional coverage validation and automatic side-dish supplementation.
 
@@ -38,7 +38,9 @@ Supabase Studio: http://127.0.0.1:54323
    - Detects current season and filters seasonal recipes
    - Assembles context prompt with nutritional coverage rules
 
-2. **LLM Call** (ChatGroq with `.withStructuredOutput(WeeklyPlanSchema)`)
+2. **LLM Call** (Vercel AI SDK `generateObject` with user-selected provider/model)
+   - Provider/model chosen via UI dropdown (format: `provider:model`, e.g. `groq:llama-3.3-70b-versatile`)
+   - Provider registry in `lib/ai/providers.ts` — dynamic import of provider packages
    - One-shot generation (no agentic loops to minimize cost)
    - Returns structured JSON matching Zod schema (`types/weekly-plan.ts`)
 
@@ -91,7 +93,7 @@ Main tables (see `supabase/migrations/`):
 - `REQUIRED_NUTRITIONAL_CLASSES`: The 3 mandatory classes
 - `MAX_RECIPE_FREQUENCY_PER_WEEK`: 2 (prevents repetition)
 - `GENERIC_FALLBACKS`: Emergency sides when DB has no matches
-- `PROMPT_VERSION`: Current value `'planner-v2.0'` — increment when changing the generation prompt
+- `PROMPT_VERSION`: Current value `'planner-v2.1'` — increment when changing the generation prompt
 
 ### Seasonality
 
@@ -111,6 +113,7 @@ app/
   layout.tsx                    # Root layout with nav
 
 lib/
+  ai/providers.ts               # AI provider registry, model factory
   supabase.ts                   # Supabase client instance
   planner-utils.ts              # Config + validation utilities
   use-local-storage-draft.ts    # Draft persistence hook
@@ -134,11 +137,18 @@ supabase/
 
 Required in `.env.local`:
 ```
+# LLM Providers (at least one required)
 GROQ_API_KEY=gsk_...
+# OPENAI_API_KEY=sk-...           # Optional: enables OpenAI models in UI
+
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-GROQ_MODEL_NAME=llama-3.3-70b-versatile  # Optional, defaults to this
 ```
+
+Model selection is done via the UI dropdown in the Planner page (no env var needed). The provider/model format stored in DB is `provider:model` (e.g. `groq:llama-3.3-70b-versatile`).
+
+To add a new LLM provider: add its config to `lib/ai/providers.ts` (AI_PROVIDERS map + createModel switch case), install its `@ai-sdk/*` package, and set the corresponding env var.
 
 ## Common Tasks
 
