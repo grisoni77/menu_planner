@@ -1,5 +1,5 @@
 export const PLANNER_CONFIG = {
-  PROMPT_VERSION: 'planner-v2.0',
+  PROMPT_VERSION: 'planner-v2.1',
   MODEL_NAME: process.env.GROQ_MODEL_NAME ?? 'llama-3.3-70b-versatile',
   REQUIRED_NUTRITIONAL_CLASSES: ['veg', 'carbs', 'protein'] as const,
   MAX_RECIPE_FREQUENCY_PER_WEEK: 2,
