@@ -49,9 +49,13 @@ Supabase Studio: http://127.0.0.1:54323
    - **Recipe Deduplication**: Maps AI-generated recipes to existing DB entries by normalized name
 
 4. **Draft Return**: Returns editable draft to frontend (saved in localStorage)
+   - localStorage key: `menu_planner:draft_weekly_plan:v1`
+   - Draft metadata stored: `draft_version`, `saved_at`, `notes`, `model_name`, `generation_prompt_version`
+   - AI-generated recipes get `recipe_id: "new"` until saved; mapped to real DB IDs during `saveWeeklyPlanAction`
+   - Meals can be toggled as "Pasto fuori casa" (empty `recipes` array + notes) via `MealEditor.tsx`
 
 5. **Final Save** (`saveWeeklyPlanAction`)
-   - Creates missing AI recipes in DB with `source='ai'`
+   - Creates missing AI recipes in DB with `source='ai'`, `generated_at`, `model_name`, `generation_prompt_version`
    - Recalculates shopping list from recipe ingredients
    - Inserts into `weekly_plans` table
 
@@ -87,6 +91,7 @@ Main tables (see `supabase/migrations/`):
 - `REQUIRED_NUTRITIONAL_CLASSES`: The 3 mandatory classes
 - `MAX_RECIPE_FREQUENCY_PER_WEEK`: 2 (prevents repetition)
 - `GENERIC_FALLBACKS`: Emergency sides when DB has no matches
+- `PROMPT_VERSION`: Current value `'planner-v2.0'` — increment when changing the generation prompt
 
 ### Seasonality
 
