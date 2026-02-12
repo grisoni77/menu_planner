@@ -150,7 +150,8 @@ GROQ_MODEL_NAME=llama-3.3-70b-versatile  # Optional, defaults to this
 5. Update UI forms in `RecipeFormModal.tsx`
 
 ### Modifying Menu Generation Logic
-- **Prompt Changes**: Edit `menu-actions.ts:54-102` and increment `PROMPT_VERSION`
+- **Prompt Changes**: Edit `menu-actions.ts:54-102`, increment `PROMPT_VERSION` in
+  `lib/planner-utils.ts`, and add an entry to `docs/prompt-changelog.md`
 - **Validation Rules**: Modify `lib/planner-utils.ts:checkCoverage`
 - **Fallback Sides**: Update `PLANNER_CONFIG.GENERIC_FALLBACKS`
 
