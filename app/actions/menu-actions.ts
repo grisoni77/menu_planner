@@ -30,14 +30,37 @@ export async function generateMenuAction(extraNotes: string) {
 Name: ${r.name}
 Role: ${r.meal_role}
 Classes: [${r.nutritional_classes?.join(', ')}]
+Seasons: [${r.seasons?.join(', ') || 'Tutte'}]
 Ingredients: ${JSON.stringify(r.ingredients)}`;
     }).join('\n---\n') || 'Nessuna ricetta salvata';
 
     const lastMenuContext = lastPlan ? JSON.stringify(lastPlan.menu_data) : 'Nessun menu precedente disponibile';
 
+    // Current Season Detection
+    const now = new Date();
+    const month = now.getMonth(); // 0-indexed
+    let currentSeason: SeasonDB = 'Inverno';
+    if (month >= 2 && month <= 4) currentSeason = 'Primavera';
+    else if (month >= 5 && month <= 7) currentSeason = 'Estate';
+    else if (month >= 8 && month <= 10) currentSeason = 'Autunno';
+
+    // Fetch fallback sides with seasonality in mind
+    const { data: fallbackSides } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('meal_role', 'side')
+      .or(`seasons.cs.{${currentSeason}},seasons.is.null`);
+
     const prompt = `
       Sei un assistente esperto nella pianificazione di menu settimanali salutari e bilanciati. Version: ${PLANNER_CONFIG.PROMPT_VERSION}
-      Il tuo obiettivo è creare un menu per la settimana (7 giorni, pranzo e cena) ottimizzando l'uso degli ingredienti già presenti in dispensa.
+      Il tuo obiettivo è creare un menu per la settimana (7 giorni, pranzo e cena) ottimizzando l'uso degli ingredienti già presenti in dispensa e rispettando la stagionalità.
+      
+      STAGIONE CORRENTE: ${currentSeason}
+      
+      REGOLE DI COMPOSIZIONE (STAGIONALITÀ):
+      - DEVI PRIORITIZZARE ricette adatte alla stagione corrente (${currentSeason}) o contrassegnate come disponibili tutto l'anno.
+      - Evita di proporre ricette o ingredienti tipicamente fuori stagione (es. no pomodori o zucchine fresche in pieno inverno, a meno che non siano già in dispensa).
+      - Per le ricette inventate (AI), assicurati che usino ingredienti coerenti con la stagione ${currentSeason}.
 
       REGOLE DI COMPOSIZIONE (COVERAGE):
       Ogni singolo pasto (pranzo o cena) deve essere composto da una o più ricette che, insieme, COPRONO SEMPRE queste tre classi nutrizionali:
@@ -74,7 +97,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
          - Imposta "recipe_id" a "new"
          - Imposta "source" a "ai"
          - Fornisci "ai_creation_data" con "ingredients" e "tags" (es. veloce, economico, forno).
-      6. Rispondi in Italiano.
+      6. RISPETTA RIGOROSAMENTE lo schema JSON richiesto. Non aggiungere caratteri extra (come ":" o altri simboli) all'interno dei nomi delle proprietà (es. usa "lunch" e non "lunch:").
+      7. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output
@@ -109,15 +133,6 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
         recipesToReplace.add(key);
       }
     });
-
-    // Extract all unique recipe IDs from the LLM result to pre-fetch them if needed
-    // (Actually we already have fallbackSides from DB)
-
-    // Fetch some generic side recipes for fallback coverage
-    const { data: fallbackSides } = await supabase
-      .from('recipes')
-      .select('*')
-      .eq('meal_role', 'side');
 
     for (const day of finalWeeklyMenu) {
       for (const meal of [day.lunch, day.dinner]) {
