@@ -1,8 +1,10 @@
 import type { LanguageModel } from "ai";
+import {SharedV3ProviderOptions} from "@ai-sdk/provider";
 
 type ModelOption = {
   id: string;
   label: string;
+  providerOptions?: SharedV3ProviderOptions;
 };
 
 type ProviderConfig = {
@@ -16,8 +18,9 @@ export const AI_PROVIDERS: Record<string, ProviderConfig> = {
     label: "Groq",
     envKey: "GROQ_API_KEY",
     models: [
-      { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B" },
-      { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B (fast)" },
+      { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", providerOptions: { groq: { structuredOutputs: false } } },
+      { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B (fast)", providerOptions: { groq: { structuredOutputs: false }} },
+      { id: "openai/gpt-oss-20b", label: "GPT OSS 20B" },
     ],
   },
   openai: {
@@ -35,6 +38,10 @@ export type AvailableProvider = {
   label: string;
   models: ModelOption[];
 };
+
+export function getProviderOptions(providerId: string, modelId: string): SharedV3ProviderOptions | undefined {
+  return AI_PROVIDERS[providerId]?.models.find((m) => m.id === modelId)?.providerOptions;
+}
 
 /** Returns only providers whose API key is configured in env. Server-side only. */
 export function getAvailableProviders(): AvailableProvider[] {
