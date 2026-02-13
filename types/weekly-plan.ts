@@ -21,13 +21,13 @@ export const MealRecipeItemSchema = z.object({
   ai_creation_data: z.object({
     ingredients: z.array(z.string()),
     tags: z.array(z.string()),
-  }).nullable().optional().describe("Dati per creare la ricetta se source è 'ai'"),
+  }).nullable().describe("Dati per creare la ricetta se source è 'ai'"),
 });
 export type MealRecipeItem = z.infer<typeof MealRecipeItemSchema>;
 
 export const MealPlanSchema = z.object({
   recipes: z.array(MealRecipeItemSchema),
-  notes: z.string().nullable().optional(),
+  notes: z.string().nullable(),
   ingredients_used_from_pantry: z.array(z.string()),
 });
 export type MealPlan = z.infer<typeof MealPlanSchema>;

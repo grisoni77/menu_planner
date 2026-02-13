@@ -1,7 +1,7 @@
 'use server'
 
 import { generateText, Output } from "ai";
-import { createModel, getAvailableProviders } from "@/lib/ai/providers";
+import {createModel, getAvailableProviders, getProviderOptions} from "@/lib/ai/providers";
 import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
@@ -116,6 +116,7 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       output: Output.object({
         schema: WeeklyPlanSchema,
       }),
+      providerOptions: getProviderOptions(providerId, modelId),
       prompt,
     });
     console.info("LLM Result:", result);
@@ -175,7 +176,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
                   name: substitute.name,
                   meal_role: substitute.meal_role as any,
                   nutritional_classes: substitute.nutritional_classes as any,
-                  source: 'user'
+                  source: 'user',
+                  ai_creation_data: null
                 };
                 recipeUsageCounts.set(key, currentCount - 1);
                 recipeUsageCounts.set(substitute.id, (recipeUsageCounts.get(substitute.id) || 0) + 1);
@@ -204,11 +206,12 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
 
             if (suitableSide) {
               meal.recipes.push({
-                recipe_id: suitableSide.id,
-                name: suitableSide.name,
-                meal_role: 'side',
-                nutritional_classes: suitableSide.nutritional_classes as any,
-                source: 'user'
+                  recipe_id: suitableSide.id,
+                  name: suitableSide.name,
+                  meal_role: 'side',
+                  nutritional_classes: suitableSide.nutritional_classes as any,
+                  source: 'user',
+                  ai_creation_data: null
               });
               // Update usage count
               recipeUsageCounts.set(suitableSide.id, (recipeUsageCounts.get(suitableSide.id) || 0) + 1);
