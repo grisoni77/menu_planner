@@ -81,7 +81,8 @@ export function RecipePickerDialog({ isOpen, onClose, onSelect, mealRole }: Reci
                       name: recipe.name,
                       meal_role: recipe.meal_role,
                       nutritional_classes: recipe.nutritional_classes,
-                      source: 'user'
+                      source: 'user',
+                      ai_creation_data: null
                     });
                     onClose();
                   }}
