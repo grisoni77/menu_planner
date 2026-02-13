@@ -15,18 +15,13 @@ import { MealEditor } from "./MealEditor";
 import { RecipePickerDialog } from "./RecipePickerDialog";
 import { checkCoverage } from "@/lib/planner-utils";
 import { Badge } from "./ui/badge";
+import { AvailableProvider} from "@/lib/ai/providers";
 
 type SavedPlan = {
   weekly_menu: DayMenu[];
   shopping_list: ShoppingItem[];
   summary_note: string;
   model_name?: string;
-};
-
-type AvailableProvider = {
-  id: string;
-  label: string;
-  models: { id: string; label: string }[];
 };
 
 const MODEL_STORAGE_KEY = 'menu_planner:selected_model';
