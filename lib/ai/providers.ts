@@ -31,6 +31,20 @@ export const AI_PROVIDERS: Record<string, ProviderConfig> = {
       { id: "gpt-4o-mini", label: "GPT-4o Mini" },
     ],
   },
+  google: {
+    label: "Google Gemini",
+    envKey: "GOOGLE_GENERATIVE_AI_API_KEY",
+    models: [
+      { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    ],
+  },
+  sambanova: {
+    label: "SambaNova",
+    envKey: "SAMBANOVA_API_KEY",
+    models: [
+      { id: "Meta-Llama-3.1-70B-Instruct", label: "Llama 3.1 70B" },
+    ],
+  },
 };
 
 export type AvailableProvider = {
@@ -64,6 +78,17 @@ export async function createModel(providerId: string, modelId: string): Promise<
     case "openai": {
       const { createOpenAI } = await import("@ai-sdk/openai");
       return createOpenAI()(modelId);
+    }
+    case "google": {
+      const { createGoogleGenerativeAI } = await import("@ai-sdk/google");
+      return createGoogleGenerativeAI()(modelId);
+    }
+    case "sambanova": {
+      const { createOpenAI } = await import("@ai-sdk/openai");
+      return createOpenAI({
+        baseURL: "https://api.sambanova.ai/v1",
+        apiKey: process.env.SAMBANOVA_API_KEY,
+      })(modelId);
     }
     default:
       throw new Error(`Provider "${providerId}" non supportato.`);
