@@ -1,6 +1,6 @@
 'use server'
 
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { createModel, getAvailableProviders } from "@/lib/ai/providers";
 import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
 import { supabase } from "@/lib/supabase";
@@ -111,9 +111,11 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
     const modelName = rest.join(":");
     const model = await createModel(providerId, modelName);
 
-    const { object: result } = await generateObject({
+    const { output: result } = await generateText({
       model,
-      schema: WeeklyPlanSchema,
+      output: Output.object({
+        schema: WeeklyPlanSchema,
+      }),
       prompt,
     });
     console.info("LLM Result:", result);
