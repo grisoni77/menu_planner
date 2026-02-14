@@ -42,7 +42,8 @@ export const AI_PROVIDERS: Record<string, ProviderConfig> = {
     label: "SambaNova",
     envKey: "SAMBANOVA_API_KEY",
     models: [
-      { id: "Meta-Llama-3.1-70B-Instruct", label: "Llama 3.1 70B" },
+      { id: "Meta-Llama-3.3-70B-Instruct", label: "Llama 3.3 70B" },
+      { id: "gpt-oss-120b", label: "OpenAI GPT OSS 120B" },
     ],
   },
 };
