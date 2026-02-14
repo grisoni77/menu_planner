@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, X } from "lucide-react"
+import { Search, X, LayoutGrid, List, ArrowUpDown, Trash2 } from "lucide-react"
 import { RecipeCard } from "@/components/RecipeCard"
 import { PantryItemCard } from "@/components/PantryItemCard"
 import { RecipeFormModal } from "@/components/RecipeFormModal"
@@ -14,6 +14,15 @@ import { PantryItemFormModal } from "@/components/PantryItemFormModal"
 import { ImportPantryModal } from "@/components/ImportPantryModal"
 import { ExportButton } from "@/components/ExportButton"
 import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { deleteRecipeAction } from "@/app/actions/menu-actions"
 
 interface DashboardClientProps {
   initialPantryItems: any[]
@@ -27,6 +36,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [selectedNutritional, setSelectedNutritional] = useState<string[]>([])
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([])
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -86,6 +97,22 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     return nameMatch && tagsMatch && roleMatch && nutritionalMatch && seasonMatch
   })
 
+  const sortedRecipes = useMemo(() => {
+    return [...filteredRecipes].sort((a, b) => {
+      const nameA = a.name.toLowerCase()
+      const nameB = b.name.toLowerCase()
+      if (sortDirection === 'asc') {
+        return nameA.localeCompare(nameB)
+      } else {
+        return nameB.localeCompare(nameA)
+      }
+    })
+  }, [filteredRecipes, sortDirection])
+
+  const toggleSort = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+  }
+
   const filteredPantry = initialPantryItems.filter(item => {
     return item.name.toLowerCase().includes(pantrySearch.toLowerCase())
   })
@@ -143,58 +170,78 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
         <TabsContent value="recipes">
           <Card>
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
-              <div className="space-y-1">
-                <CardTitle>Le mie Ricette</CardTitle>
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold mr-1">Tipo:</span>
-                  {['main', 'side'].map(role => (
-                    <Badge 
-                      key={role}
-                      variant={selectedRoles.includes(role) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
-                        selectedRoles.includes(role) 
-                          ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
-                          : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
-                      }`}
-                      onClick={() => toggleRole(role)}
-                    >
-                      {role}
-                    </Badge>
-                  ))}
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Nutr:</span>
-                  {[
-                    {id: 'veg', label: 'Veg', color: 'green'},
-                    {id: 'carbs', label: 'Carbs', color: 'amber'},
-                    {id: 'protein', label: 'Prot', color: 'red'}
-                  ].map(cls => (
-                    <Badge 
-                      key={cls.id}
-                      variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                        selectedNutritional.includes(cls.id) 
-                          ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
-                          : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
-                      }`}
-                      onClick={() => toggleNutritional(cls.id)}
-                    >
-                      {cls.label}
-                    </Badge>
-                  ))}
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Stag:</span>
-                  {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
-                    <Badge 
-                      key={season}
-                      variant={selectedSeasons.includes(season) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                        selectedSeasons.includes(season) 
-                          ? 'bg-blue-600 hover:bg-blue-700' 
-                          : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
-                      }`}
-                      onClick={() => toggleSeason(season)}
-                    >
-                      {season}
-                    </Badge>
-                  ))}
+              <div className="flex items-center justify-between w-full md:w-auto">
+                <div className="space-y-1">
+                  <CardTitle>Le mie Ricette</CardTitle>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold mr-1">Tipo:</span>
+                    {['main', 'side'].map(role => (
+                      <Badge 
+                        key={role}
+                        variant={selectedRoles.includes(role) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
+                          selectedRoles.includes(role) 
+                            ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
+                            : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                        }`}
+                        onClick={() => toggleRole(role)}
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Nutr:</span>
+                    {[
+                      {id: 'veg', label: 'Veg', color: 'green'},
+                      {id: 'carbs', label: 'Carbs', color: 'amber'},
+                      {id: 'protein', label: 'Prot', color: 'red'}
+                    ].map(cls => (
+                      <Badge 
+                        key={cls.id}
+                        variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                          selectedNutritional.includes(cls.id) 
+                            ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
+                            : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                        }`}
+                        onClick={() => toggleNutritional(cls.id)}
+                      >
+                        {cls.label}
+                      </Badge>
+                    ))}
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Stag:</span>
+                    {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
+                      <Badge 
+                        key={season}
+                        variant={selectedSeasons.includes(season) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                          selectedSeasons.includes(season) 
+                            ? 'bg-blue-600 hover:bg-blue-700' 
+                            : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
+                        }`}
+                        onClick={() => toggleSeason(season)}
+                      >
+                        {season}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex bg-muted p-1 rounded-lg ml-4">
+                  <Button
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -304,22 +351,75 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   </Button>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRecipes.map((recipe) => (
-                  <RecipeCard 
-                    key={recipe.id} 
-                    recipe={recipe} 
-                    onTagClick={toggleTag}
-                    onRoleClick={toggleRole}
-                    onNutritionalClick={toggleNutritional}
-                    onSeasonClick={toggleSeason}
-                    selectedTags={selectedTags}
-                    selectedRoles={selectedRoles}
-                    selectedNutritional={selectedNutritional}
-                    selectedSeasons={selectedSeasons}
-                  />
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sortedRecipes.map((recipe) => (
+                    <RecipeCard 
+                      key={recipe.id} 
+                      recipe={recipe} 
+                      onTagClick={toggleTag}
+                      onRoleClick={toggleRole}
+                      onNutritionalClick={toggleNutritional}
+                      onSeasonClick={toggleSeason}
+                      selectedTags={selectedTags}
+                      selectedRoles={selectedRoles}
+                      selectedNutritional={selectedNutritional}
+                      selectedSeasons={selectedSeasons}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={toggleSort}>
+                          <div className="flex items-center gap-2">
+                            Nome
+                            <ArrowUpDown className="h-4 w-4" />
+                          </div>
+                        </TableHead>
+                        <TableHead>Classi Nutrizionali</TableHead>
+                        <TableHead className="text-right">Azioni</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedRecipes.map((recipe) => (
+                        <TableRow key={recipe.id}>
+                          <TableCell className="font-medium">{recipe.name}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {recipe.nutritional_classes?.map((cls: string) => {
+                                const colors = {
+                                  veg: 'bg-green-50 text-green-700 border-green-200',
+                                  carbs: 'bg-amber-50 text-amber-700 border-amber-200',
+                                  protein: 'bg-red-50 text-red-700 border-red-200'
+                                }
+                                const colorClass = colors[cls as keyof typeof colors] || 'bg-slate-50 text-slate-700 border-slate-200'
+                                return (
+                                  <Badge key={cls} variant="outline" className={`text-[10px] uppercase px-1.5 py-0 ${colorClass}`}>
+                                    {cls}
+                                  </Badge>
+                                )
+                              })}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <RecipeFormModal recipe={recipe as any} />
+                              <form action={deleteRecipeAction.bind(null, recipe.id)}>
+                                <Button variant="ghost" size="icon" type="submit">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </form>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
               {filteredRecipes.length === 0 && (
                 <p className="text-center text-muted-foreground py-12">
                   {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
