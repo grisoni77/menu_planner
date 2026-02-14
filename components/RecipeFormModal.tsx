@@ -33,6 +33,7 @@ interface RecipeFormModalProps {
     source?: RecipeSource
     seasons?: Season[]
   }
+  hideLabelOnMobile?: boolean
 }
 
 const NUTRITIONAL_CLASSES: { value: NutritionalClass; label: string }[] = [
@@ -48,7 +49,7 @@ const SEASONS: { value: Season; label: string }[] = [
   { value: 'Inverno', label: 'Inverno' },
 ]
 
-export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
+export function RecipeFormModal({ recipe, hideLabelOnMobile }: RecipeFormModalProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedClasses, setSelectedClasses] = useState<NutritionalClass[]>(recipe?.nutritional_classes || [])
@@ -115,9 +116,11 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
             <Edit2 className="h-4 w-4" />
           </Button>
         ) : (
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2" title="Aggiungi Ricetta">
             <Plus className="h-4 w-4" />
-            Aggiungi Ricetta
+            <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>
+              Aggiungi Ricetta
+            </span>
           </Button>
         )}
       </DialogTrigger>

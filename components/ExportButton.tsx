@@ -8,9 +8,10 @@ interface ExportButtonProps {
   filename: string
   type: 'recipes' | 'pantry' | 'weekly-plan' | 'weekly-plans-history'
   label?: string
+  hideLabelOnMobile?: boolean
 }
 
-export function ExportButton({ data, filename, type, label }: ExportButtonProps) {
+export function ExportButton({ data, filename, type, label, hideLabelOnMobile }: ExportButtonProps) {
   const exportData = () => {
     if (type === 'weekly-plans-history') {
       const content = JSON.stringify(data, null, 2)
@@ -120,9 +121,12 @@ export function ExportButton({ data, filename, type, label }: ExportButtonProps)
       size="sm" 
       onClick={exportData}
       className="flex items-center gap-2"
+      title={label || (type === 'weekly-plan' ? "Esporta Piano" : "Esporta CSV")}
     >
       <Download className="h-4 w-4" />
-      {label || (type === 'weekly-plan' ? "Esporta Piano" : "Esporta CSV")}
+      <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>
+        {label || (type === 'weekly-plan' ? "Esporta Piano" : "Esporta CSV")}
+      </span>
     </Button>
   )
 }

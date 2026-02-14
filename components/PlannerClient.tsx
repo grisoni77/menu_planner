@@ -222,12 +222,14 @@ export default function PlannerClient() {
               <p className="text-sm text-amber-700">Modifica il menu prima di salvarlo definitivamente.</p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
-              <Button variant="outline" onClick={clearDraft} className="flex-1 md:flex-none">
-                <X className="mr-2 h-4 w-4" /> Scarta
+              <Button variant="outline" onClick={clearDraft} className="flex-1 md:flex-none" title="Scarta">
+                <X className="sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Scarta</span>
               </Button>
-              <Button onClick={handleSave} disabled={!isValid || saving} className="flex-1 md:flex-none">
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Salva Piano
+              <Button onClick={handleSave} disabled={!isValid || saving} className="flex-1 md:flex-none" title="Salva Piano">
+                {saving ? <Loader2 className="sm:mr-2 h-4 w-4 animate-spin" /> : <Save className="sm:mr-2 h-4 w-4" />}
+                <span className="hidden sm:inline">Salva Piano</span>
+                <span className="sm:hidden">{saving ? "" : "Salva"}</span>
               </Button>
             </div>
           </div>
@@ -281,12 +283,13 @@ export default function PlannerClient() {
               <h2 className="text-3xl font-black text-green-900">Menu Salvato! 🎉</h2>
               <p className="text-green-700">Il tuo piano settimanale è pronto.</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <ExportButton 
                 data={[plan]} 
                 filename="piano-settimanale.md" 
                 type="weekly-plan" 
                 label="Esporta Piano (MD)"
+                hideLabelOnMobile
               />
               <Button variant="outline" onClick={() => setPlan(null)}>Crea Nuovo</Button>
             </div>

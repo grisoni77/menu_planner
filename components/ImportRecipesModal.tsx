@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export function ImportRecipesModal() {
+export function ImportRecipesModal({ hideLabelOnMobile }: { hideLabelOnMobile?: boolean }) {
   const [open, setOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [status, setStatus] = useState<{ success?: boolean; message?: string } | null>(null)
@@ -47,9 +47,11 @@ export function ImportRecipesModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="flex items-center gap-2" title="Importa CSV">
           <FileUp className="h-4 w-4" />
-          Importa CSV
+          <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>
+            Importa CSV
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

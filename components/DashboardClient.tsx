@@ -129,8 +129,28 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
 
         <TabsContent value="pantry">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
-              <CardTitle>Dispensa</CardTitle>
+            <CardHeader className="flex flex-col gap-4 pb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <CardTitle>Dispensa</CardTitle>
+                <div className="flex bg-muted p-1 rounded-lg self-end md:self-center">
+                  <Button
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
                 <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -141,16 +161,17 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setPantrySearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                <div className="flex gap-2 w-full sm:w-auto justify-end sm:justify-start">
                   <div className="flex gap-2">
                     <ExportButton 
                       data={filteredPantry} 
                       filename="dispensa.csv" 
                       type="pantry" 
+                      hideLabelOnMobile
                     />
-                    <ImportPantryModal />
+                    <ImportPantryModal hideLabelOnMobile />
                   </div>
-                  <PantryItemFormModal />
+                  <PantryItemFormModal hideLabelOnMobile />
                 </div>
               </div>
             </CardHeader>
@@ -270,16 +291,17 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setRecipeSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                <div className="flex gap-2 w-full sm:w-auto justify-end sm:justify-start">
                   <div className="flex gap-2">
                     <ExportButton 
                       data={filteredRecipes} 
                       filename="ricette.csv" 
                       type="recipes" 
+                      hideLabelOnMobile
                     />
-                    <ImportRecipesModal />
+                    <ImportRecipesModal hideLabelOnMobile />
                   </div>
-                  <RecipeFormModal />
+                  <RecipeFormModal hideLabelOnMobile />
                 </div>
               </div>
             </CardHeader>

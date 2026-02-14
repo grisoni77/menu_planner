@@ -20,9 +20,10 @@ interface PantryItemFormModalProps {
     quantity: string | null
     category: string | null
   }
+  hideLabelOnMobile?: boolean
 }
 
-export function PantryItemFormModal({ item }: PantryItemFormModalProps) {
+export function PantryItemFormModal({ item, hideLabelOnMobile }: PantryItemFormModalProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isEditing = !!item
@@ -54,9 +55,11 @@ export function PantryItemFormModal({ item }: PantryItemFormModalProps) {
             <Edit2 className="h-4 w-4" />
           </Button>
         ) : (
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2" title="Aggiungi Ingrediente">
             <Plus className="h-4 w-4" />
-            Aggiungi Ingrediente
+            <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>
+              Aggiungi Ingrediente
+            </span>
           </Button>
         )}
       </DialogTrigger>
