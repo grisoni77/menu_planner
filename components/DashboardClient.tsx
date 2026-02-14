@@ -153,56 +153,62 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
               <div className="space-y-1">
                 <CardTitle>Le mie Ricette</CardTitle>
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold mr-1">Tipo:</span>
-                  {['main', 'side'].map(role => (
-                    <Badge 
-                      key={role}
-                      variant={selectedRoles.includes(role) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
-                        selectedRoles.includes(role) 
-                          ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
-                          : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
-                      }`}
-                      onClick={() => toggleRole(role)}
-                    >
-                      {role}
-                    </Badge>
-                  ))}
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Nutr:</span>
-                  {[
-                    {id: 'veg', label: 'Veg', color: 'green'},
-                    {id: 'carbs', label: 'Carbs', color: 'amber'},
-                    {id: 'protein', label: 'Prot', color: 'red'}
-                  ].map(cls => (
-                    <Badge 
-                      key={cls.id}
-                      variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                        selectedNutritional.includes(cls.id) 
-                          ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
-                          : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
-                      }`}
-                      onClick={() => toggleNutritional(cls.id)}
-                    >
-                      {cls.label}
-                    </Badge>
-                  ))}
-                  <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Stag:</span>
-                  {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
-                    <Badge 
-                      key={season}
-                      variant={selectedSeasons.includes(season) ? "default" : "outline"}
-                      className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                        selectedSeasons.includes(season) 
-                          ? 'bg-blue-600 hover:bg-blue-700' 
-                          : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
-                      }`}
-                      onClick={() => toggleSeason(season)}
-                    >
-                      {season}
-                    </Badge>
-                  ))}
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Tipo:</span>
+                    {['main', 'side'].map(role => (
+                      <Badge
+                        key={role}
+                        variant={selectedRoles.includes(role) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
+                          selectedRoles.includes(role)
+                            ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
+                            : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                        }`}
+                        onClick={() => toggleRole(role)}
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Nutr:</span>
+                    {[
+                      {id: 'veg', label: 'Veg'},
+                      {id: 'carbs', label: 'Carbs'},
+                      {id: 'protein', label: 'Prot'}
+                    ].map(cls => (
+                      <Badge
+                        key={cls.id}
+                        variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                          selectedNutritional.includes(cls.id)
+                            ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
+                            : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                        }`}
+                        onClick={() => toggleNutritional(cls.id)}
+                      >
+                        {cls.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Stag:</span>
+                    {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
+                      <Badge
+                        key={season}
+                        variant={selectedSeasons.includes(season) ? "default" : "outline"}
+                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                          selectedSeasons.includes(season)
+                            ? 'bg-blue-600 hover:bg-blue-700'
+                            : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
+                        }`}
+                        onClick={() => toggleSeason(season)}
+                      >
+                        {season}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -346,7 +352,64 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                 </>
               ) : (
                 <>
-                  <div className="overflow-x-auto rounded-md border">
+                  {/* Mobile: lista compatta */}
+                  <div className="md:hidden space-y-2">
+                    {sortedFilteredRecipes.map((recipe) => {
+                      const nutColors: Record<string, string> = {
+                        veg: selectedNutritional.includes('veg') ? 'bg-green-50 text-green-700 border-green-200' : 'hover:bg-green-50 hover:text-green-700 text-green-600 border-green-200',
+                        carbs: selectedNutritional.includes('carbs') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'hover:bg-amber-50 hover:text-amber-700 text-amber-600 border-amber-200',
+                        protein: selectedNutritional.includes('protein') ? 'bg-red-50 text-red-700 border-red-200' : 'hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200',
+                      }
+                      const roleColor = recipe.meal_role === 'main'
+                        ? (selectedRoles.includes('main') ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 border-indigo-200')
+                        : (selectedRoles.includes('side') ? 'bg-slate-100 text-slate-700 border-slate-200' : 'hover:bg-slate-100 hover:text-slate-700 text-slate-600 border-slate-200')
+                      return (
+                        <div key={recipe.id} className="flex items-start justify-between gap-2 px-3 py-2.5 rounded-md border bg-card">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-medium text-sm leading-tight">{recipe.name}</span>
+                              {recipe.source === 'ai' && (
+                                <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 flex gap-1 items-center px-1.5 py-0 text-[10px]">
+                                  <Sparkles className="h-3 w-3" />
+                                  AI
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {recipe.meal_role && (
+                                <button
+                                  onClick={() => toggleRole(recipe.meal_role)}
+                                  className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${roleColor}`}
+                                >
+                                  {recipe.meal_role}
+                                </button>
+                              )}
+                              {recipe.nutritional_classes?.map((cls: string) => (
+                                <button
+                                  key={cls}
+                                  onClick={() => toggleNutritional(cls)}
+                                  className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${nutColors[cls] ?? 'bg-muted text-muted-foreground border-transparent'}`}
+                                >
+                                  {cls}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <RecipeFormModal recipe={recipe as any} />
+                            <form action={deleteRecipeAction.bind(null, recipe.id)}>
+                              <Button variant="ghost" size="icon" type="submit">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </form>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Desktop: tabella */}
+                  <div className="hidden md:block rounded-md border">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-muted/50">
@@ -429,6 +492,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       </tbody>
                     </table>
                   </div>
+
                   {sortedFilteredRecipes.length === 0 && (
                     <p className="text-center text-muted-foreground py-12">
                       {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
