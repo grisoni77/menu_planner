@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, X } from "lucide-react"
+import { Search, X, LayoutGrid, List, ChevronUp, ChevronDown, Trash2, Sparkles } from "lucide-react"
 import { RecipeCard } from "@/components/RecipeCard"
 import { PantryItemCard } from "@/components/PantryItemCard"
 import { RecipeFormModal } from "@/components/RecipeFormModal"
@@ -14,6 +14,7 @@ import { PantryItemFormModal } from "@/components/PantryItemFormModal"
 import { ImportPantryModal } from "@/components/ImportPantryModal"
 import { ExportButton } from "@/components/ExportButton"
 import { Badge } from "@/components/ui/badge"
+import { deleteRecipeAction } from "@/app/actions/menu-actions"
 
 interface DashboardClientProps {
   initialPantryItems: any[]
@@ -27,6 +28,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [selectedNutritional, setSelectedNutritional] = useState<string[]>([])
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([])
+  const [recipeViewMode, setRecipeViewMode] = useState<'cards' | 'table'>('cards')
+  const [tableSortDir, setTableSortDir] = useState<'asc' | 'desc'>('asc')
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
@@ -84,6 +87,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
       selectedSeasons.some(season => recipe.seasons?.includes(season))
 
     return nameMatch && tagsMatch && roleMatch && nutritionalMatch && seasonMatch
+  })
+
+  const sortedFilteredRecipes = [...filteredRecipes].sort((a, b) => {
+    const cmp = a.name.localeCompare(b.name, 'it')
+    return tableSortDir === 'asc' ? cmp : -cmp
   })
 
   const filteredPantry = initialPantryItems.filter(item => {
@@ -207,11 +215,19 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setRecipeSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <ExportButton 
-                    data={filteredRecipes} 
-                    filename="ricette.csv" 
-                    type="recipes" 
+                <div className="flex gap-2 items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title={recipeViewMode === 'cards' ? 'Passa alla vista tabella' : 'Passa alla vista card'}
+                    onClick={() => setRecipeViewMode(v => v === 'cards' ? 'table' : 'cards')}
+                  >
+                    {recipeViewMode === 'cards' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                  </Button>
+                  <ExportButton
+                    data={filteredRecipes}
+                    filename="ricette.csv"
+                    type="recipes"
                   />
                   <ImportRecipesModal />
                   <RecipeFormModal />
@@ -304,26 +320,109 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   </Button>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRecipes.map((recipe) => (
-                  <RecipeCard 
-                    key={recipe.id} 
-                    recipe={recipe} 
-                    onTagClick={toggleTag}
-                    onRoleClick={toggleRole}
-                    onNutritionalClick={toggleNutritional}
-                    onSeasonClick={toggleSeason}
-                    selectedTags={selectedTags}
-                    selectedRoles={selectedRoles}
-                    selectedNutritional={selectedNutritional}
-                    selectedSeasons={selectedSeasons}
-                  />
-                ))}
-              </div>
-              {filteredRecipes.length === 0 && (
-                <p className="text-center text-muted-foreground py-12">
-                  {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
-                </p>
+              {recipeViewMode === 'cards' ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredRecipes.map((recipe) => (
+                      <RecipeCard
+                        key={recipe.id}
+                        recipe={recipe}
+                        onTagClick={toggleTag}
+                        onRoleClick={toggleRole}
+                        onNutritionalClick={toggleNutritional}
+                        onSeasonClick={toggleSeason}
+                        selectedTags={selectedTags}
+                        selectedRoles={selectedRoles}
+                        selectedNutritional={selectedNutritional}
+                        selectedSeasons={selectedSeasons}
+                      />
+                    ))}
+                  </div>
+                  {filteredRecipes.length === 0 && (
+                    <p className="text-center text-muted-foreground py-12">
+                      {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="overflow-x-auto rounded-md border">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="px-4 py-3 text-left font-medium w-1/2">
+                            <button
+                              className="flex items-center gap-1 hover:text-foreground text-muted-foreground transition-colors"
+                              onClick={() => setTableSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                            >
+                              Nome
+                              {tableSortDir === 'asc'
+                                ? <ChevronUp className="h-3.5 w-3.5" />
+                                : <ChevronDown className="h-3.5 w-3.5" />
+                              }
+                            </button>
+                          </th>
+                          <th className="px-4 py-3 text-left font-medium text-muted-foreground">Classi nutrizionali</th>
+                          <th className="px-4 py-3 text-right font-medium text-muted-foreground">Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedFilteredRecipes.map((recipe, idx) => {
+                          const nutColors: Record<string, string> = {
+                            veg: 'bg-green-50 text-green-700 border-green-200',
+                            carbs: 'bg-amber-50 text-amber-700 border-amber-200',
+                            protein: 'bg-red-50 text-red-700 border-red-200',
+                          }
+                          return (
+                            <tr key={recipe.id} className={`border-b last:border-0 ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{recipe.name}</span>
+                                  {recipe.source === 'ai' && (
+                                    <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200 flex gap-1 items-center px-1.5 py-0 text-[10px]">
+                                      <Sparkles className="h-3 w-3" />
+                                      AI
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {recipe.nutritional_classes && recipe.nutritional_classes.length > 0
+                                    ? recipe.nutritional_classes.map((cls: string) => (
+                                        <span
+                                          key={cls}
+                                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0 rounded-md border ${nutColors[cls] ?? 'bg-muted text-muted-foreground border-transparent'}`}
+                                        >
+                                          {cls}
+                                        </span>
+                                      ))
+                                    : <span className="text-[10px] text-amber-600">—</span>
+                                  }
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex gap-1 justify-end">
+                                  <RecipeFormModal recipe={recipe as any} />
+                                  <form action={deleteRecipeAction.bind(null, recipe.id)}>
+                                    <Button variant="ghost" size="icon" type="submit">
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </form>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {sortedFilteredRecipes.length === 0 && (
+                    <p className="text-center text-muted-foreground py-12">
+                      {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
