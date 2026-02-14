@@ -379,7 +379,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                             <ArrowUpDown className="h-4 w-4" />
                           </div>
                         </TableHead>
-                        <TableHead>Classi Nutrizionali</TableHead>
+                        <TableHead>Dettagli</TableHead>
                         <TableHead className="text-right">Azioni</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -388,18 +388,35 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                         <TableRow key={recipe.id}>
                           <TableCell className="font-medium">{recipe.name}</TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 flex-wrap">
+                              {recipe.meal_role && (
+                                <button
+                                  onClick={() => toggleRole(recipe.meal_role)}
+                                  className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${
+                                    selectedRoles.includes(recipe.meal_role)
+                                      ? (recipe.meal_role === 'main' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200')
+                                      : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+                                  }`}
+                                >
+                                  {recipe.meal_role}
+                                </button>
+                              )}
                               {recipe.nutritional_classes?.map((cls: string) => {
+                                const isSelected = selectedNutritional.includes(cls)
                                 const colors = {
-                                  veg: 'bg-green-50 text-green-700 border-green-200',
-                                  carbs: 'bg-amber-50 text-amber-700 border-amber-200',
-                                  protein: 'bg-red-50 text-red-700 border-red-200'
+                                  veg: isSelected ? 'bg-green-50 text-green-700 border-green-200' : 'hover:bg-green-50 hover:text-green-700 text-green-600 border-green-200',
+                                  carbs: isSelected ? 'bg-amber-50 text-amber-700 border-amber-200' : 'hover:bg-amber-50 hover:text-amber-700 text-amber-600 border-amber-200',
+                                  protein: isSelected ? 'bg-red-50 text-red-700 border-red-200' : 'hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200'
                                 }
-                                const colorClass = colors[cls as keyof typeof colors] || 'bg-slate-50 text-slate-700 border-slate-200'
+                                const colorClass = colors[cls as keyof typeof colors] || 'bg-white text-muted-foreground border-input'
                                 return (
-                                  <Badge key={cls} variant="outline" className={`text-[10px] uppercase px-1.5 py-0 ${colorClass}`}>
+                                  <button 
+                                    key={cls} 
+                                    onClick={() => toggleNutritional(cls)}
+                                    className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${colorClass}`}
+                                  >
                                     {cls}
-                                  </Badge>
+                                  </button>
                                 )
                               })}
                             </div>
