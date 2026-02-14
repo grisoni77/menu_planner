@@ -362,17 +362,20 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                               }
                             </button>
                           </th>
-                          <th className="px-4 py-3 text-left font-medium text-muted-foreground">Classi nutrizionali</th>
+                          <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tipo / Classi nutrizionali</th>
                           <th className="px-4 py-3 text-right font-medium text-muted-foreground">Azioni</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sortedFilteredRecipes.map((recipe, idx) => {
                           const nutColors: Record<string, string> = {
-                            veg: 'bg-green-50 text-green-700 border-green-200',
-                            carbs: 'bg-amber-50 text-amber-700 border-amber-200',
-                            protein: 'bg-red-50 text-red-700 border-red-200',
+                            veg: selectedNutritional.includes('veg') ? 'bg-green-50 text-green-700 border-green-200' : 'hover:bg-green-50 hover:text-green-700 text-green-600 border-green-200',
+                            carbs: selectedNutritional.includes('carbs') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'hover:bg-amber-50 hover:text-amber-700 text-amber-600 border-amber-200',
+                            protein: selectedNutritional.includes('protein') ? 'bg-red-50 text-red-700 border-red-200' : 'hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200',
                           }
+                          const roleColor = recipe.meal_role === 'main'
+                            ? (selectedRoles.includes('main') ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 border-indigo-200')
+                            : (selectedRoles.includes('side') ? 'bg-slate-100 text-slate-700 border-slate-200' : 'hover:bg-slate-100 hover:text-slate-700 text-slate-600 border-slate-200')
                           return (
                             <tr key={recipe.id} className={`border-b last:border-0 ${idx % 2 === 0 ? '' : 'bg-muted/20'}`}>
                               <td className="px-4 py-3">
@@ -388,16 +391,25 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex flex-wrap gap-1">
+                                  {recipe.meal_role && (
+                                    <button
+                                      onClick={() => toggleRole(recipe.meal_role)}
+                                      className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${roleColor}`}
+                                    >
+                                      {recipe.meal_role}
+                                    </button>
+                                  )}
                                   {recipe.nutritional_classes && recipe.nutritional_classes.length > 0
                                     ? recipe.nutritional_classes.map((cls: string) => (
-                                        <span
+                                        <button
                                           key={cls}
-                                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0 rounded-md border ${nutColors[cls] ?? 'bg-muted text-muted-foreground border-transparent'}`}
+                                          onClick={() => toggleNutritional(cls)}
+                                          className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors ${nutColors[cls] ?? 'bg-muted text-muted-foreground border-transparent'}`}
                                         >
                                           {cls}
-                                        </span>
+                                        </button>
                                       ))
-                                    : <span className="text-[10px] text-amber-600">—</span>
+                                    : !recipe.meal_role && <span className="text-[10px] text-amber-600">—</span>
                                   }
                                 </div>
                               </td>
