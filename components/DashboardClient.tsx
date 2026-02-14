@@ -110,10 +110,10 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
 
         <TabsContent value="pantry">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
+            <CardHeader className="pb-6 space-y-4">
               <CardTitle>Dispensa</CardTitle>
               <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-none">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Cerca ingrediente..."
@@ -122,11 +122,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setPantrySearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <ExportButton 
-                    data={filteredPantry} 
-                    filename="dispensa.csv" 
-                    type="pantry" 
+                <div className="flex flex-wrap gap-2">
+                  <ExportButton
+                    data={filteredPantry}
+                    filename="dispensa.csv"
+                    type="pantry"
                   />
                   <ImportPantryModal />
                   <PantryItemFormModal />
@@ -150,69 +150,82 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
 
         <TabsContent value="recipes">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
-              <div className="space-y-1">
-                <CardTitle>Le mie Ricette</CardTitle>
-                <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Tipo:</span>
-                    {['main', 'side'].map(role => (
-                      <Badge
-                        key={role}
-                        variant={selectedRoles.includes(role) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
-                          selectedRoles.includes(role)
-                            ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
-                            : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
-                        }`}
-                        onClick={() => toggleRole(role)}
-                      >
-                        {role}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Nutr:</span>
-                    {[
-                      {id: 'veg', label: 'Veg'},
-                      {id: 'carbs', label: 'Carbs'},
-                      {id: 'protein', label: 'Prot'}
-                    ].map(cls => (
-                      <Badge
-                        key={cls.id}
-                        variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                          selectedNutritional.includes(cls.id)
-                            ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
-                            : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
-                        }`}
-                        onClick={() => toggleNutritional(cls.id)}
-                      >
-                        {cls.label}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold">Stag:</span>
-                    {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
-                      <Badge
-                        key={season}
-                        variant={selectedSeasons.includes(season) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                          selectedSeasons.includes(season)
-                            ? 'bg-blue-600 hover:bg-blue-700'
-                            : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
-                        }`}
-                        onClick={() => toggleSeason(season)}
-                      >
-                        {season}
-                      </Badge>
-                    ))}
+            <CardHeader className="pb-6 space-y-4">
+              {/* Riga 1: Titolo + filtri badge + view toggle sempre top-right */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1 min-w-0">
+                  <CardTitle>Le mie Ricette</CardTitle>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold">Tipo:</span>
+                      {['main', 'side'].map(role => (
+                        <Badge
+                          key={role}
+                          variant={selectedRoles.includes(role) ? "default" : "outline"}
+                          className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
+                            selectedRoles.includes(role)
+                              ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
+                              : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                          }`}
+                          onClick={() => toggleRole(role)}
+                        >
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold">Nutr:</span>
+                      {[
+                        {id: 'veg', label: 'Veg'},
+                        {id: 'carbs', label: 'Carbs'},
+                        {id: 'protein', label: 'Prot'}
+                      ].map(cls => (
+                        <Badge
+                          key={cls.id}
+                          variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
+                          className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                            selectedNutritional.includes(cls.id)
+                              ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
+                              : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                          }`}
+                          onClick={() => toggleNutritional(cls.id)}
+                        >
+                          {cls.label}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold">Stag:</span>
+                      {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
+                        <Badge
+                          key={season}
+                          variant={selectedSeasons.includes(season) ? "default" : "outline"}
+                          className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                            selectedSeasons.includes(season)
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
+                          }`}
+                          onClick={() => toggleSeason(season)}
+                        >
+                          {season}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  title={recipeViewMode === 'cards' ? 'Passa alla vista tabella' : 'Passa alla vista card'}
+                  onClick={() => setRecipeViewMode(v => v === 'cards' ? 'table' : 'cards')}
+                >
+                  {recipeViewMode === 'cards' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                </Button>
               </div>
+              {/* Riga 2: Ricerca + bottoni azione (wrappano su mobile) */}
               <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-none">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Cerca per nome o tag..."
@@ -221,15 +234,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setRecipeSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2 items-center">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    title={recipeViewMode === 'cards' ? 'Passa alla vista tabella' : 'Passa alla vista card'}
-                    onClick={() => setRecipeViewMode(v => v === 'cards' ? 'table' : 'cards')}
-                  >
-                    {recipeViewMode === 'cards' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-                  </Button>
+                <div className="flex flex-wrap gap-2">
                   <ExportButton
                     data={filteredRecipes}
                     filename="ricette.csv"
