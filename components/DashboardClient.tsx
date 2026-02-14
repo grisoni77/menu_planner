@@ -129,10 +129,10 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
 
         <TabsContent value="pantry">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
+            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
               <CardTitle>Dispensa</CardTitle>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Cerca ingrediente..."
@@ -141,13 +141,15 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setPantrySearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <ExportButton 
-                    data={filteredPantry} 
-                    filename="dispensa.csv" 
-                    type="pantry" 
-                  />
-                  <ImportPantryModal />
+                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex gap-2">
+                    <ExportButton 
+                      data={filteredPantry} 
+                      filename="dispensa.csv" 
+                      type="pantry" 
+                    />
+                    <ImportPantryModal />
+                  </div>
                   <PantryItemFormModal />
                 </div>
               </div>
@@ -169,63 +171,77 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
 
         <TabsContent value="recipes">
           <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 pb-6">
-              <div className="flex items-center justify-between w-full md:w-auto">
-                <div className="space-y-1">
+            <CardHeader className="flex flex-col gap-4 pb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-2">
                   <CardTitle>Le mie Ricette</CardTitle>
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold mr-1">Tipo:</span>
-                    {['main', 'side'].map(role => (
-                      <Badge 
-                        key={role}
-                        variant={selectedRoles.includes(role) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
-                          selectedRoles.includes(role) 
-                            ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
-                            : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
-                        }`}
-                        onClick={() => toggleRole(role)}
-                      >
-                        {role}
-                      </Badge>
-                    ))}
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Nutr:</span>
-                    {[
-                      {id: 'veg', label: 'Veg', color: 'green'},
-                      {id: 'carbs', label: 'Carbs', color: 'amber'},
-                      {id: 'protein', label: 'Prot', color: 'red'}
-                    ].map(cls => (
-                      <Badge 
-                        key={cls.id}
-                        variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                          selectedNutritional.includes(cls.id) 
-                            ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
-                            : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
-                        }`}
-                        onClick={() => toggleNutritional(cls.id)}
-                      >
-                        {cls.label}
-                      </Badge>
-                    ))}
-                    <span className="text-[11px] text-muted-foreground uppercase font-bold ml-2 mr-1">Stag:</span>
-                    {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
-                      <Badge 
-                        key={season}
-                        variant={selectedSeasons.includes(season) ? "default" : "outline"}
-                        className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
-                          selectedSeasons.includes(season) 
-                            ? 'bg-blue-600 hover:bg-blue-700' 
-                            : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
-                        }`}
-                        onClick={() => toggleSeason(season)}
-                      >
-                        {season}
-                      </Badge>
-                    ))}
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold min-w-[35px]">Tipo:</span>
+                      <div className="flex gap-1">
+                        {['main', 'side'].map(role => (
+                          <Badge 
+                            key={role}
+                            variant={selectedRoles.includes(role) ? "default" : "outline"}
+                            className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors ${
+                              selectedRoles.includes(role) 
+                                ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
+                                : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                            }`}
+                            onClick={() => toggleRole(role)}
+                          >
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold min-w-[35px]">Nutr:</span>
+                      <div className="flex gap-1">
+                        {[
+                          {id: 'veg', label: 'Veg', color: 'green'},
+                          {id: 'carbs', label: 'Carbs', color: 'amber'},
+                          {id: 'protein', label: 'Prot', color: 'red'}
+                        ].map(cls => (
+                          <Badge 
+                            key={cls.id}
+                            variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
+                            className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                              selectedNutritional.includes(cls.id) 
+                                ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
+                                : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                            }`}
+                            onClick={() => toggleNutritional(cls.id)}
+                          >
+                            {cls.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground uppercase font-bold min-w-[35px]">Stag:</span>
+                      <div className="flex gap-1 flex-wrap">
+                        {['Primavera', 'Estate', 'Autunno', 'Inverno'].map(season => (
+                          <Badge 
+                            key={season}
+                            variant={selectedSeasons.includes(season) ? "default" : "outline"}
+                            className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors ${
+                              selectedSeasons.includes(season) 
+                                ? 'bg-blue-600 hover:bg-blue-700' 
+                                : 'hover:bg-blue-50 hover:text-blue-700 text-blue-600'
+                            }`}
+                            onClick={() => toggleSeason(season)}
+                          >
+                            {season}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex bg-muted p-1 rounded-lg ml-4">
+                <div className="flex bg-muted p-1 rounded-lg self-end md:self-center">
                   <Button
                     variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                     size="sm"
@@ -244,8 +260,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Cerca per nome o tag..."
@@ -254,13 +270,15 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     onChange={(e) => setRecipeSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <ExportButton 
-                    data={filteredRecipes} 
-                    filename="ricette.csv" 
-                    type="recipes" 
-                  />
-                  <ImportRecipesModal />
+                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex gap-2">
+                    <ExportButton 
+                      data={filteredRecipes} 
+                      filename="ricette.csv" 
+                      type="recipes" 
+                    />
+                    <ImportRecipesModal />
+                  </div>
                   <RecipeFormModal />
                 </div>
               </div>
@@ -369,8 +387,9 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   ))}
                 </div>
               ) : (
-                <div className="border rounded-md">
-                  <Table>
+                <div className="border rounded-md overflow-x-auto">
+                  <div className="min-w-[600px] md:min-w-full">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={toggleSort}>
@@ -435,6 +454,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               )}
               {filteredRecipes.length === 0 && (
