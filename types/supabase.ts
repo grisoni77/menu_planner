@@ -112,6 +112,7 @@ export type Database = {
           menu_data: Json
           model_name: string | null
           shopping_list: Json
+          shopping_list_checked: string[]
         }
         Insert: {
           created_at?: string
@@ -121,6 +122,7 @@ export type Database = {
           menu_data: Json
           model_name?: string | null
           shopping_list: Json
+          shopping_list_checked?: string[]
         }
         Update: {
           created_at?: string
@@ -130,6 +132,7 @@ export type Database = {
           menu_data?: Json
           model_name?: string | null
           shopping_list?: Json
+          shopping_list_checked?: string[]
         }
         Relationships: []
       }
