@@ -49,7 +49,7 @@ export function ImportRecipesModal() {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
           <FileUp className="h-4 w-4" />
-          Importa CSV
+          <span className="hidden sm:inline">Importa CSV</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

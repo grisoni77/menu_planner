@@ -117,7 +117,7 @@ export function RecipeFormModal({ recipe }: RecipeFormModalProps) {
         ) : (
           <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Aggiungi Ricetta
+            <span className="hidden sm:inline">Aggiungi Ricetta</span>
           </Button>
         )}
       </DialogTrigger>
