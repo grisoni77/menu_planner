@@ -2,9 +2,9 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trash2, Tag, Sparkles, Info } from "lucide-react"
+import { Tag, Sparkles, Info } from "lucide-react"
 import { RecipeFormModal } from "./RecipeFormModal"
-import { deleteRecipeAction } from "@/app/actions/menu-actions"
+import { DeleteRecipeButton } from "./DeleteRecipeButton"
 import { Badge } from "@/components/ui/badge"
 import { NutritionalClass, MealRole, RecipeSource, Season } from "@/types/weekly-plan"
 
@@ -109,11 +109,7 @@ export function RecipeCard({
           </div>
           <div className="flex gap-1">
             <RecipeFormModal recipe={recipe as any} />
-            <form action={deleteRecipeAction.bind(null, recipe.id)}>
-              <Button variant="ghost" size="icon" type="submit">
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </form>
+            <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
           </div>
         </div>
         

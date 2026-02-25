@@ -14,8 +14,8 @@ import { ImportRecipesModal } from "@/components/ImportRecipesModal"
 import { PantryItemFormModal } from "@/components/PantryItemFormModal"
 import { ImportPantryModal } from "@/components/ImportPantryModal"
 import { ExportButton } from "@/components/ExportButton"
+import { DeleteRecipeButton } from "@/components/DeleteRecipeButton"
 import { Badge } from "@/components/ui/badge"
-import { deleteRecipeAction } from "@/app/actions/menu-actions"
 
 interface DashboardClientProps {
   initialPantryItems: any[]
@@ -435,11 +435,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                             <td className="py-2.5 px-2">
                               <div className="flex gap-1 justify-end">
                                 <RecipeFormModal recipe={recipe} />
-                                <form action={deleteRecipeAction.bind(null, recipe.id)}>
-                                  <Button variant="ghost" size="icon" type="submit" className="h-8 w-8">
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </form>
+                                <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} className="h-8 w-8" />
                               </div>
                             </td>
                           </tr>
