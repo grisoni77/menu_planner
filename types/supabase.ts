@@ -34,6 +34,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      family_profile: {
+        Row: {
+          id: string
+          profile_text: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_text?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          profile_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pantry_items: {
         Row: {
           category: string | null

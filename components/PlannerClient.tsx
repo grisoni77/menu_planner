@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { generateMenuAction, saveWeeklyPlanAction, getAvailableModelsAction } from "@/app/actions/menu-actions";
+import { generateMenuAction, saveWeeklyPlanAction, getAvailableModelsAction, getFamilyProfileAction } from "@/app/actions/menu-actions";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DayMenu, ShoppingItem, MealRecipeItem, MealPlan } from "@/types/weekly-plan";
-import { Loader2, CheckCircle2, Download, Trash2, Save, X, AlertTriangle, Info } from "lucide-react";
+import { Loader2, CheckCircle2, Download, Trash2, Save, X, AlertTriangle, Info, Users } from "lucide-react";
 import { DayCard } from "./DayCard";
 import { ExportButton } from "./ExportButton";
 import { useLocalStorageDraft } from "@/lib/use-local-storage-draft";
@@ -28,6 +28,7 @@ const MODEL_STORAGE_KEY = 'menu_planner:selected_model';
 
 export default function PlannerClient() {
   const [notes, setNotes] = useState("");
+  const [familyProfileLoaded, setFamilyProfileLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<SavedPlan | null>(null);
@@ -37,15 +38,21 @@ export default function PlannerClient() {
   const { draft, setDraft, clearDraft, isReady } = useLocalStorageDraft('menu_planner:draft_weekly_plan:v1');
 
   useEffect(() => {
-    getAvailableModelsAction().then((providers) => {
+    Promise.all([
+      getAvailableModelsAction(),
+      getFamilyProfileAction(),
+    ]).then(([providers, profileResult]) => {
       setAvailableProviders(providers);
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      // Validate that saved model still exists in available providers
       const allModelIds = providers.flatMap(p => p.models.map(m => `${p.id}:${m.id}`));
       if (saved && allModelIds.includes(saved)) {
         setSelectedModel(saved);
       } else if (allModelIds.length > 0) {
         setSelectedModel(allModelIds[0]);
+      }
+      if (profileResult.profileText) {
+        setNotes(profileResult.profileText);
+        setFamilyProfileLoaded(true);
       }
     });
   }, []);
@@ -182,6 +189,13 @@ export default function PlannerClient() {
               onChange={(e) => setNotes(e.target.value)}
               className="min-h-[100px]"
             />
+            {familyProfileLoaded && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                Profilo famiglia pre-caricato.{" "}
+                <a href="/dashboard#profilo" className="underline hover:text-foreground">Modifica profilo</a>
+              </p>
+            )}
             {availableProviders.length > 0 && (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-muted-foreground">Modello AI</label>

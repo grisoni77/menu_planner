@@ -720,3 +720,29 @@ export async function getRecipesAction() {
   }
   return { success: true, data };
 }
+
+export async function getFamilyProfileAction() {
+  const { data, error } = await supabase
+    .from('family_profile')
+    .select('profile_text')
+    .eq('id', 'default')
+    .single();
+
+  if (error) {
+    console.error("Errore nel recupero del profilo famiglia:", error);
+    return { success: false, profileText: "" };
+  }
+  return { success: true, profileText: data?.profile_text ?? "" };
+}
+
+export async function saveFamilyProfileAction(profileText: string) {
+  const { error } = await supabase
+    .from('family_profile')
+    .upsert({ id: 'default', profile_text: profileText, updated_at: new Date().toISOString() });
+
+  if (error) {
+    console.error("Errore nel salvataggio del profilo famiglia:", error);
+    return { success: false, error: "Impossibile salvare il profilo famiglia." };
+  }
+  return { success: true };
+}

@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, X, LayoutGrid, Table, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Search, X, LayoutGrid, Table, ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Save, CheckCircle2 } from "lucide-react"
 import { getNutritionalClassColor, getMealRoleColor } from "@/lib/recipe-colors"
 import { RecipeCard } from "@/components/RecipeCard"
 import { PantryItemCard } from "@/components/PantryItemCard"
@@ -16,15 +17,20 @@ import { ImportPantryModal } from "@/components/ImportPantryModal"
 import { ExportButton } from "@/components/ExportButton"
 import { DeleteRecipeButton } from "@/components/DeleteRecipeButton"
 import { Badge } from "@/components/ui/badge"
+import { saveFamilyProfileAction } from "@/app/actions/menu-actions"
 
 interface DashboardClientProps {
   initialPantryItems: any[]
   initialRecipes: any[]
+  initialFamilyProfile: string
 }
 
-export function DashboardClient({ initialPantryItems, initialRecipes }: DashboardClientProps) {
+export function DashboardClient({ initialPantryItems, initialRecipes, initialFamilyProfile }: DashboardClientProps) {
   const [recipeSearch, setRecipeSearch] = useState("")
   const [pantrySearch, setPantrySearch] = useState("")
+  const [profileText, setProfileText] = useState(initialFamilyProfile)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [selectedNutritional, setSelectedNutritional] = useState<string[]>([])
@@ -106,6 +112,22 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     })
   }
 
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true)
+    setProfileSaved(false)
+    try {
+      const result = await saveFamilyProfileAction(profileText)
+      if (result.success) {
+        setProfileSaved(true)
+        setTimeout(() => setProfileSaved(false), 3000)
+      } else {
+        alert("Errore nel salvataggio del profilo.")
+      }
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
   const filteredPantry = initialPantryItems.filter(item => {
     return item.name.toLowerCase().includes(pantrySearch.toLowerCase())
   })
@@ -121,9 +143,10 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
       <h1 className="text-3xl font-bold">Dashboard</h1>
 
       <Tabs defaultValue="recipes" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 mb-8">
           <TabsTrigger value="recipes">Ricette</TabsTrigger>
           <TabsTrigger value="pantry">Dispensa</TabsTrigger>
+          <TabsTrigger value="profilo">Profilo Famiglia</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pantry">
@@ -451,6 +474,43 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                   {recipeSearch ? "Nessuna ricetta trovata." : "Nessuna ricetta salvata."}
                 </p>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="profilo">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profilo Famiglia</CardTitle>
+              <CardDescription>
+                Inserisci informazioni stabili sulla tua famiglia (abitudini alimentari, intolleranze, impegni fissi settimanali come i pranzi scolastici).
+                Queste vengono pre-caricate automaticamente nel campo preferenze ogni volta che generi un nuovo menu.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder={`Esempi:\n- 2 adulti, 2 bambini (8 e 11 anni)\n- Lunedì e mercoledì i bambini mangiano a scuola (pranzo fuori)\n- Nessuna allergia, ma evitare cibi molto piccanti\n- Preferiamo carne bianca e pesce, limitare la carne rossa a 1 volta a settimana`}
+                value={profileText}
+                onChange={(e) => { setProfileText(e.target.value); setProfileSaved(false) }}
+                className="min-h-[220px] font-mono text-sm"
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Il testo viene aggiunto automaticamente alle preferenze nel Generatore Menu.
+                </p>
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile}
+                  className="min-w-[120px]"
+                >
+                  {profileSaved ? (
+                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Salvato</>
+                  ) : isSavingProfile ? (
+                    "Salvataggio..."
+                  ) : (
+                    <><Save className="mr-2 h-4 w-4" /> Salva Profilo</>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
