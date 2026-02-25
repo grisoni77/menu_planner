@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, X, LayoutGrid, Table, ArrowUpDown, ArrowUp, ArrowDown, Sparkles, Pencil, Trash2 } from "lucide-react"
+import { Search, X, LayoutGrid, Table, ArrowUpDown, ArrowUp, ArrowDown, Sparkles } from "lucide-react"
+import { getNutritionalClassColor, getMealRoleColor } from "@/lib/recipe-colors"
 import { RecipeCard } from "@/components/RecipeCard"
 import { PantryItemCard } from "@/components/PantryItemCard"
 import { RecipeFormModal } from "@/components/RecipeFormModal"
@@ -63,7 +64,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
     )
   }
 
-  const filteredRecipes = initialRecipes.filter(recipe => {
+  const filteredRecipes = useMemo(() => initialRecipes.filter(recipe => {
     const search = recipeSearch.toLowerCase()
     const nameMatch = recipe.name.toLowerCase().includes(search)
 
@@ -87,7 +88,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
       selectedSeasons.some(season => recipe.seasons?.includes(season))
 
     return nameMatch && tagsMatch && roleMatch && nutritionalMatch && seasonMatch
-  })
+  }), [initialRecipes, recipeSearch, selectedTags, selectedRoles, selectedNutritional, selectedSeasons])
 
   const sortedRecipes = useMemo(() => {
     if (!sortDirection) return filteredRecipes
@@ -203,8 +204,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       variant={selectedRoles.includes(role) ? "default" : "outline"}
                       className={`cursor-pointer text-[10px] px-2 py-0 h-5 capitalize transition-colors whitespace-nowrap ${
                         selectedRoles.includes(role)
-                          ? (role === 'main' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800')
-                          : (role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700' : 'hover:bg-slate-100 text-slate-600')
+                          ? getMealRoleColor(role, 'button')
+                          : getMealRoleColor(role, 'buttonInactive')
                       }`}
                       onClick={() => toggleRole(role)}
                     >
@@ -218,8 +219,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       variant={selectedNutritional.includes(cls.id) ? "default" : "outline"}
                       className={`cursor-pointer text-[10px] px-2 py-0 h-5 transition-colors whitespace-nowrap ${
                         selectedNutritional.includes(cls.id)
-                          ? (cls.id === 'veg' ? 'bg-green-600 hover:bg-green-700' : cls.id === 'carbs' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700')
-                          : (cls.id === 'veg' ? 'hover:bg-green-50 hover:text-green-700 text-green-600' : cls.id === 'carbs' ? 'hover:bg-amber-50 hover:text-amber-700 text-amber-600' : 'hover:bg-red-50 hover:text-red-700 text-red-600')
+                          ? getNutritionalClassColor(cls.id, 'button')
+                          : getNutritionalClassColor(cls.id, 'buttonInactive')
                       }`}
                       onClick={() => toggleNutritional(cls.id)}
                     >
@@ -274,9 +275,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                       key={role}
                       variant="secondary"
                       className={`flex items-center gap-1 px-3 py-1 ${
-                        role === 'main'
-                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                        getMealRoleColor(role, 'badge')
                       }`}
                     >
                       Tipo: {role}
@@ -289,18 +288,11 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                     </Badge>
                   ))}
                   {selectedNutritional.map(cls => {
-                    const colors = {
-                      veg: 'bg-green-50 text-green-700 border-green-200',
-                      carbs: 'bg-amber-50 text-amber-700 border-amber-200',
-                      protein: 'bg-red-50 text-red-700 border-red-200'
-                    }
-                    const colorClass = colors[cls as keyof typeof colors] || 'bg-slate-100 text-slate-700 border-slate-200'
-
                     return (
                       <Badge
                         key={cls}
                         variant="secondary"
-                        className={`flex items-center gap-1 px-3 py-1 ${colorClass}`}
+                        className={`flex items-center gap-1 px-3 py-1 ${getNutritionalClassColor(cls, 'badge')}`}
                       >
                         Nutr: {cls}
                         <button
@@ -418,8 +410,8 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                                     onClick={() => toggleRole(recipe.meal_role)}
                                     className={`cursor-pointer text-[10px] uppercase tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors whitespace-nowrap ${
                                       selectedRoles.includes(recipe.meal_role)
-                                        ? (recipe.meal_role === 'main' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200')
-                                        : (recipe.meal_role === 'main' ? 'hover:bg-indigo-50 hover:text-indigo-700 border-transparent bg-secondary text-secondary-foreground' : 'hover:bg-slate-100 hover:text-slate-700 border-transparent bg-secondary text-secondary-foreground')
+                                        ? getMealRoleColor(recipe.meal_role, 'badge')
+                                        : getMealRoleColor(recipe.meal_role, 'badgeInactive')
                                     }`}
                                   >
                                     {recipe.meal_role}
@@ -427,12 +419,7 @@ export function DashboardClient({ initialPantryItems, initialRecipes }: Dashboar
                                 )}
                                 {recipe.nutritional_classes?.map((cls: string) => {
                                   const isSelected = selectedNutritional.includes(cls)
-                                  const colors: Record<string, string> = {
-                                    veg: isSelected ? 'bg-green-50 text-green-700 border-green-200' : 'hover:bg-green-50 hover:text-green-700 text-green-600 border-green-200',
-                                    carbs: isSelected ? 'bg-amber-50 text-amber-700 border-amber-200' : 'hover:bg-amber-50 hover:text-amber-700 text-amber-600 border-amber-200',
-                                    protein: isSelected ? 'bg-red-50 text-red-700 border-red-200' : 'hover:bg-red-50 hover:text-red-700 text-red-600 border-red-200'
-                                  }
-                                  const colorClass = colors[cls] || 'bg-white text-muted-foreground border-input'
+                                  const colorClass = getNutritionalClassColor(cls, isSelected ? 'badge' : 'badgeInactive')
                                   return (
                                     <button
                                       key={cls}
