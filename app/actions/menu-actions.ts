@@ -2,7 +2,7 @@
 
 import { generateText, Output } from "ai";
 import {createModel, getAvailableProviders, getProviderOptions} from "@/lib/ai/providers";
-import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
+import { WeeklyPlanSchema, DayMenu, MealRecipeItem, SaveWeeklyPlanPayloadSchema } from "@/types/weekly-plan";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
@@ -295,12 +295,16 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
   }
 }
 
-export async function saveWeeklyPlanAction(payload: any) {
+export async function saveWeeklyPlanAction(payload: unknown) {
   try {
+    const parsed = SaveWeeklyPlanPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      return { success: false, error: "Payload non valido: " + parsed.error.issues.map(i => i.message).join(", ") };
+    }
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Non autenticato." };
-    const { weekly_menu, notes, model_name, generation_prompt_version } = payload;
+    const { weekly_menu, notes, model_name, generation_prompt_version } = parsed.data;
     
     // 1. Process AI recipes
     const finalWeeklyMenu = JSON.parse(JSON.stringify(weekly_menu)); // Deep clone to avoid mutating draft state

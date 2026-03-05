@@ -64,3 +64,10 @@ export const WeeklyPlanDraftSchema = z.object({
 });
 
 export type WeeklyPlanDraft = z.infer<typeof WeeklyPlanDraftSchema>;
+
+export const SaveWeeklyPlanPayloadSchema = z.object({
+  weekly_menu: z.array(DayMenuSchema),
+  notes: z.string().optional().default(""),
+  model_name: z.string().optional(),
+  generation_prompt_version: z.string().optional(),
+});
