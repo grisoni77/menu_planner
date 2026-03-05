@@ -20,6 +20,8 @@ export async function getAvailableModelsAction() {
 export async function generateMenuAction(extraNotes: string, modelId: string) {
   try {
     const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Non autenticato." };
 
     // 1. Data Fetching
     const { data: pantryItems } = await supabase.from('pantry_items').select('*');
@@ -297,6 +299,7 @@ export async function saveWeeklyPlanAction(payload: any) {
   try {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Non autenticato." };
     const { weekly_menu, notes, model_name, generation_prompt_version } = payload;
     
     // 1. Process AI recipes
@@ -455,6 +458,7 @@ export async function saveWeeklyPlanAction(payload: any) {
 export async function addPantryItemAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const name = (formData.get('name') as string).trim();
   const quantity = formData.get('quantity') as string;
   const category = formData.get('category') as string;
@@ -470,6 +474,8 @@ export async function addPantryItemAction(formData: FormData) {
 
 export async function updatePantryItemAction(id: string, formData: FormData) {
   const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const name = (formData.get('name') as string).trim();
   const quantity = formData.get('quantity') as string;
   const category = formData.get('category') as string;
@@ -485,6 +491,8 @@ export async function updatePantryItemAction(id: string, formData: FormData) {
 
 export async function deletePantryItemAction(id: string) {
   const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
   await supabase.from('pantry_items').delete().eq('id', id);
   revalidatePath('/dashboard');
   revalidatePath('/');
@@ -493,6 +501,7 @@ export async function deletePantryItemAction(id: string) {
 export async function addRecipeAction(formData: FormData) {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Non autenticato." };
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
@@ -523,6 +532,8 @@ export async function addRecipeAction(formData: FormData) {
 
 export async function updateRecipeAction(id: string, formData: FormData) {
     const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Non autenticato." };
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
@@ -548,6 +559,8 @@ export async function updateRecipeAction(id: string, formData: FormData) {
 
 export async function deleteRecipeAction(id: string) {
     const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     await supabase.from('recipes').delete().eq('id', id);
     revalidatePath('/dashboard');
     revalidatePath('/');
@@ -556,6 +569,7 @@ export async function deleteRecipeAction(id: string) {
 export async function importRecipesAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
@@ -630,6 +644,7 @@ export async function importRecipesAction(formData: FormData) {
 export async function importPantryItemsAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
@@ -686,6 +701,7 @@ export async function importPantryItemsAction(formData: FormData) {
 export async function importWeeklyPlansAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
@@ -763,6 +779,7 @@ export async function getFamilyProfileAction() {
 export async function saveFamilyProfileAction(profileText: string) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Non autenticato." };
   const { error } = await supabase
     .from('family_profile')
     .upsert(
