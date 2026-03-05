@@ -3,7 +3,7 @@
 import { generateText, Output } from "ai";
 import {createModel, getAvailableProviders, getProviderOptions} from "@/lib/ai/providers";
 import { WeeklyPlanSchema, DayMenu, MealRecipeItem } from "@/types/weekly-plan";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 import { Database } from "@/types/supabase";
 import { normalizeRecipeName, PLANNER_CONFIG, checkCoverage } from "@/lib/planner-utils";
@@ -19,6 +19,8 @@ export async function getAvailableModelsAction() {
 
 export async function generateMenuAction(extraNotes: string, modelId: string) {
   try {
+    const supabase = await createSupabaseServerClient();
+
     // 1. Data Fetching
     const { data: pantryItems } = await supabase.from('pantry_items').select('*');
     const { data: recipes } = await supabase.from('recipes').select('*');
@@ -293,6 +295,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
 
 export async function saveWeeklyPlanAction(payload: any) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const { weekly_menu, notes, model_name, generation_prompt_version } = payload;
     
     // 1. Process AI recipes
@@ -346,7 +350,8 @@ export async function saveWeeklyPlanAction(payload: any) {
                   source: 'ai',
                   generated_at: new Date().toISOString(),
                   model_name: model_name || 'unknown',
-                  generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
+                  generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION,
+                  user_id: user!.id
                 })
                 .select()
                 .single();
@@ -426,7 +431,8 @@ export async function saveWeeklyPlanAction(payload: any) {
         shopping_list: finalShoppingList as any,
         family_profile_text: notes || "",
         model_name: model_name || 'unknown',
-        generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION
+        generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION,
+        user_id: user!.id
       })
       .select()
       .single();
@@ -447,11 +453,13 @@ export async function saveWeeklyPlanAction(payload: any) {
 }
 
 export async function addPantryItemAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const name = (formData.get('name') as string).trim();
   const quantity = formData.get('quantity') as string;
   const category = formData.get('category') as string;
 
-  const { error } = await (supabase.from('pantry_items') as any).insert({ name, quantity, category } as any);
+  const { error } = await (supabase.from('pantry_items') as any).insert({ name, quantity, category, user_id: user!.id } as any);
   if (error && error.code === '23505') {
     return { success: false, error: "Un ingrediente con questo nome esiste già." };
   }
@@ -461,6 +469,7 @@ export async function addPantryItemAction(formData: FormData) {
 }
 
 export async function updatePantryItemAction(id: string, formData: FormData) {
+  const supabase = await createSupabaseServerClient();
   const name = (formData.get('name') as string).trim();
   const quantity = formData.get('quantity') as string;
   const category = formData.get('category') as string;
@@ -475,30 +484,34 @@ export async function updatePantryItemAction(id: string, formData: FormData) {
 }
 
 export async function deletePantryItemAction(id: string) {
+  const supabase = await createSupabaseServerClient();
   await supabase.from('pantry_items').delete().eq('id', id);
   revalidatePath('/dashboard');
   revalidatePath('/');
 }
 
 export async function addRecipeAction(formData: FormData) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
     const seasons = formData.getAll('seasons') as SeasonDB[];
     const meal_role = (formData.get('meal_role') as RecipeRole) || 'main';
     const nutritional_classes = formData.getAll('nutritional_classes') as NutritionalClassDB[];
-    
+
     const ingredients = ingredientsRaw.split(',').map(i => ({ name: i.trim() })).filter(i => i.name);
     const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t);
 
-    const { error } = await supabase.from('recipes').insert({ 
-        name, 
-        ingredients: ingredients as any, 
+    const { error } = await supabase.from('recipes').insert({
+        name,
+        ingredients: ingredients as any,
         tags,
         seasons,
         meal_role,
         nutritional_classes,
-        source: 'user' as RecipeSourceDB
+        source: 'user' as RecipeSourceDB,
+        user_id: user!.id
     });
     if (error && error.code === '23505') {
       return { success: false, error: "Una ricetta con questo nome esiste già." };
@@ -509,6 +522,7 @@ export async function addRecipeAction(formData: FormData) {
 }
 
 export async function updateRecipeAction(id: string, formData: FormData) {
+    const supabase = await createSupabaseServerClient();
     const name = (formData.get('name') as string).trim();
     const ingredientsRaw = formData.get('ingredients') as string;
     const tagsRaw = formData.get('tags') as string;
@@ -533,12 +547,15 @@ export async function updateRecipeAction(id: string, formData: FormData) {
 }
 
 export async function deleteRecipeAction(id: string) {
+    const supabase = await createSupabaseServerClient();
     await supabase.from('recipes').delete().eq('id', id);
     revalidatePath('/dashboard');
     revalidatePath('/');
 }
 
 export async function importRecipesAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
@@ -584,14 +601,15 @@ export async function importRecipesAction(formData: FormData) {
       const nutritional_classes = classesRaw ? classesRaw.split(',').map(c => c.trim()).filter(c => ['veg', 'carbs', 'protein'].includes(c)) as NutritionalClassDB[] : [];
       const seasons = seasonsRaw ? seasonsRaw.split(',').map(s => s.trim()).filter(s => ['Primavera', 'Estate', 'Autunno', 'Inverno'].includes(s)) as SeasonDB[] : [];
 
-      recipesToInsert.push({ 
-        name, 
-        ingredients: ingredients as any, 
-        tags, 
+      recipesToInsert.push({
+        name,
+        ingredients: ingredients as any,
+        tags,
         seasons,
-        meal_role, 
+        meal_role,
         nutritional_classes,
-        source: 'user' as RecipeSourceDB
+        source: 'user' as RecipeSourceDB,
+        user_id: user!.id
       });
     }
 
@@ -610,14 +628,16 @@ export async function importRecipesAction(formData: FormData) {
 }
 
 export async function importPantryItemsAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
   try {
     const content = await file.text();
     const lines = content.split('\n');
-    
-    const itemsToInsert = [];
+
+    const itemsToInsert: { name: string; quantity: string; category: string; user_id: string }[] = [];
     
     // Header: nome,quantità,categoria
     for (let i = 1; i < lines.length; i++) {
@@ -647,7 +667,7 @@ export async function importPantryItemsAction(formData: FormData) {
       const quantity = parts[1] ? parts[1].replace(/^"|"$/g, '').trim() : "";
       const category = parts[2] ? parts[2].replace(/^"|"$/g, '').trim() : "";
 
-      itemsToInsert.push({ name, quantity, category });
+      itemsToInsert.push({ name, quantity, category, user_id: user!.id });
     }
 
     if (itemsToInsert.length > 0) {
@@ -664,24 +684,27 @@ export async function importPantryItemsAction(formData: FormData) {
 }
 
 export async function importWeeklyPlansAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: "Nessun file fornito" };
 
   try {
     const content = await file.text();
     const data = JSON.parse(content);
-    
+
     if (!Array.isArray(data)) {
       throw new Error("Il file deve contenere un array di piani settimanali");
     }
 
-    const plansToInsert = data.map(plan => ({
+    const plansToInsert = data.map((plan: any) => ({
       menu_data: plan.menu_data,
       shopping_list: plan.shopping_list,
       family_profile_text: plan.family_profile_text || "",
       model_name: plan.model_name || null,
       generation_prompt_version: plan.generation_prompt_version || null,
-      created_at: plan.created_at || new Date().toISOString()
+      created_at: plan.created_at || new Date().toISOString(),
+      user_id: user!.id
     }));
 
     if (plansToInsert.length > 0) {
@@ -699,6 +722,7 @@ export async function importWeeklyPlansAction(formData: FormData) {
 }
 
 export async function getWeeklyPlansAction() {
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('weekly_plans')
     .select('*')
@@ -713,6 +737,7 @@ export async function getWeeklyPlansAction() {
 }
 
 export async function getRecipesAction() {
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from('recipes').select('*').order('name');
   if (error) {
     console.error("Errore nel recupero delle ricette:", error);
@@ -722,11 +747,11 @@ export async function getRecipesAction() {
 }
 
 export async function getFamilyProfileAction() {
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('family_profile')
     .select('profile_text')
-    .eq('id', 'default')
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Errore nel recupero del profilo famiglia:", error);
@@ -736,9 +761,14 @@ export async function getFamilyProfileAction() {
 }
 
 export async function saveFamilyProfileAction(profileText: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase
     .from('family_profile')
-    .upsert({ id: 'default', profile_text: profileText, updated_at: new Date().toISOString() });
+    .upsert(
+      { id: user!.id, user_id: user!.id, profile_text: profileText, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
 
   if (error) {
     console.error("Errore nel salvataggio del profilo famiglia:", error);

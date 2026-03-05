@@ -1,7 +1,8 @@
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { DashboardClient } from "@/components/DashboardClient";
 
 export default async function DashboardPage() {
+  const supabase = await createSupabaseServerClient();
   const [
     { data: pantryItems },
     { data: recipes },
@@ -9,7 +10,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('pantry_items').select('*').order('name'),
     supabase.from('recipes').select('*').order('name'),
-    supabase.from('family_profile').select('profile_text').eq('id', 'default').single(),
+    supabase.from('family_profile').select('profile_text').maybeSingle(),
   ]);
 
   return (
