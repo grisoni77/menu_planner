@@ -79,7 +79,7 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       - Se dopo aver scelto il main manca una classe nutrizionale, DEVI aggiungere un side sostanzioso della classe mancante (non “micro porzioni”).
       - Varietà:
         - Vietato usare lo stesso main (stesso recipe_id o stesso nome per ricette AI) più di ${PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK} volte nella settimana.
-        - Vietato usare la stessa ricetta (recipe_id) più di ${PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK} volte nella settimana complessiva.
+        - Non ci sono vincoli sui contorni (side): puoi usare ognuno di loro più volte durante la settimana nel rispetto degli altri vincoli.
 
       DISPENSA ATTUALE:
       ${pantryContext}
