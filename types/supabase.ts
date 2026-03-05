@@ -39,16 +39,19 @@ export type Database = {
           id: string
           profile_text: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           id?: string
           profile_text?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           id?: string
           profile_text?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -59,6 +62,7 @@ export type Database = {
           id: string
           name: string
           quantity: string | null
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -66,6 +70,7 @@ export type Database = {
           id?: string
           name: string
           quantity?: string | null
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -73,6 +78,7 @@ export type Database = {
           id?: string
           name?: string
           quantity?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -90,6 +96,7 @@ export type Database = {
           seasons: Database["public"]["Enums"]["season"][]
           source: Database["public"]["Enums"]["recipe_source"]
           tags: string[] | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -104,6 +111,7 @@ export type Database = {
           seasons?: Database["public"]["Enums"]["season"][]
           source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -118,6 +126,7 @@ export type Database = {
           seasons?: Database["public"]["Enums"]["season"][]
           source?: Database["public"]["Enums"]["recipe_source"]
           tags?: string[] | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -131,6 +140,7 @@ export type Database = {
           model_name: string | null
           shopping_list: Json
           shopping_list_checked: string[]
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -141,6 +151,7 @@ export type Database = {
           model_name?: string | null
           shopping_list: Json
           shopping_list_checked?: string[]
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -151,6 +162,7 @@ export type Database = {
           model_name?: string | null
           shopping_list?: Json
           shopping_list_checked?: string[]
+          user_id?: string | null
         }
         Relationships: []
       }
