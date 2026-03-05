@@ -53,11 +53,16 @@ rodney --help
 ### 5. Chromium
 
 ```bash
-# Manjaro/Arch:
+# Manjaro/Arch con Chromium:
 sudo pacman -S chromium
 
-# Se il binario non è nel PATH standard:
+# Oppure con Google Chrome (AUR):
+yay -S google-chrome
+
+# Se il binario non è nel PATH standard di rodney, indicalo esplicitamente:
 export ROD_BROWSER_BIN=$(which chromium)
+# oppure:
+export ROD_BROWSER_BIN=$(which google-chrome-stable)
 ```
 
 ---
@@ -86,8 +91,10 @@ Showboat ri-esegue tutti i blocchi `bash` e segnala se l'output è cambiato.
 # 1. Avvia l'app
 npm run dev &
 
-# 2. Avvia Chrome headless
+# 2. Avvia Chrome headless (usa chromium o google-chrome-stable)
 chromium --headless --remote-debugging-port=9222 --no-sandbox --disable-gpu &
+# oppure:
+# google-chrome-stable --headless --remote-debugging-port=9222 --no-sandbox --disable-gpu &
 
 # 3. Connetti rodney alla sessione locale
 cd docs/demo
