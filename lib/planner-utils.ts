@@ -1,5 +1,5 @@
 export const PLANNER_CONFIG = {
-  PROMPT_VERSION: 'planner-v2.1',
+  PROMPT_VERSION: 'planner-v2.2',
   REQUIRED_NUTRITIONAL_CLASSES: ['veg', 'carbs', 'protein'] as const,
   MAX_RECIPE_FREQUENCY_PER_WEEK: 2,
   GENERIC_FALLBACKS: {

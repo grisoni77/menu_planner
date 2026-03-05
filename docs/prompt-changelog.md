@@ -6,6 +6,19 @@ Ogni modifica al prompt di generazione menu deve:
 
 ---
 
+## v2.2 — Flessibilità contorni
+
+**Commit**: `3268c2c`
+**Data**: 2026-03-05
+**File modificati**: `app/actions/menu-actions.ts`
+
+### Modifiche
+- Rimozione del vincolo di frequenza massima settimanale per le ricette di tipo `side` (contorni) nel prompt dell'LLM.
+- Mantenuto il limite di `PLANNER_CONFIG.MAX_RECIPE_FREQUENCY_PER_WEEK` utilizzi solo per le ricette `main` (portate principali).
+- Questo permette all'IA di suggerire lo stesso contorno più volte nella settimana per migliorare la coerenza con la dispensa.
+
+---
+
 ## v2.1 — Stagionalità rigorosa
 
 **Commit**: `8e3290f`
