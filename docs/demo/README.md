@@ -10,7 +10,9 @@ Questa cartella contiene il documento di demo del Menu Planner AI generato con
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source ~/.local/bin/env
+
+# Riapri il terminale, oppure:
+export PATH=$HOME/.local/bin:$PATH
 ```
 
 Su Manjaro/Arch:
