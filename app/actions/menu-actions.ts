@@ -69,14 +69,13 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       REGOLE DI COMPOSIZIONE (STAGIONALITÀ):
       - DEVI PRIORITIZZARE ricette adatte alla stagione corrente (${currentSeason}) o contrassegnate come disponibili tutto l'anno.
       - Evita di proporre ricette o ingredienti tipicamente fuori stagione (es. no pomodori o zucchine fresche in pieno inverno, a meno che non siano già in dispensa).
-      - Per le ricette inventate (AI), assicurati che usino ingredienti coerenti con la stagione ${currentSeason}.
 
       REGOLE DI COMPOSIZIONE (COVERAGE):
       Ogni singolo pasto (pranzo o cena) deve essere composto da una o più ricette che, insieme, COPRONO SEMPRE queste tre classi nutrizionali:
       1. ${PLANNER_CONFIG.REQUIRED_NUTRITIONAL_CLASSES.join(', ')}
       
       REGOLE DI COMPOSIZIONE (SCELTA RICETTE):
-      - DAI MAGGIORE PRIORITÀ alle ricette disponibili nel database.
+      - USA ESCLUSIVAMENTE le ricette disponibili nel database.
       - Struttura del pasto:
         - Deve includere 1 ricetta main.
         - Deve includere almeno 1 ricetta side, A MENO CHE la ricetta main copra già ${PLANNER_CONFIG.REQUIRED_NUTRITIONAL_CLASSES.join('+')} da sola.
@@ -88,10 +87,10 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       DISPENSA ATTUALE:
       ${pantryContext}
 
-      RICETTE DISPONIBILI NEL DATABASE (Dai priorità a queste):
+      RICETTE DISPONIBILI NEL DATABASE:
       ${recipesContext}
 
-      MENU DELLA SETTIMANA PRECEDENTE (VARIA RISPETTO A QUESTO):
+      MENU DELLA SETTIMANA PRECEDENTE (SE POSSIBILE VARIA RISPETTO A QUESTO):
       ${lastMenuContext}
 
       NOTE EXTRA DALL'UTENTE:
@@ -101,13 +100,8 @@ Ingredients: ${JSON.stringify(r.ingredients)}`;
       1. Se l'utente indica esplicitamente che un pasto è fuori casa (es. "mangiamo fuori", "pasto fuori"), lascia l'array "recipes" VUOTO per quel pasto e usa il campo "notes" per indicare "Pasto fuori casa".
       2. Per ogni pasto, indica in "ingredients_used_from_pantry" quali ingredienti della dispensa sono stati usati specificamente per quel pranzo o cena.
       3. Per ogni ricetta selezionata dal DATABASE, devi assolutamente restituire il suo "recipe_id" originale.
-      4. Se non ci sono ricette adatte nel database, inventa nuove ricette semplici coerenti con la dispensa.
-      5. Per le ricette inventate (AI):
-         - Imposta "recipe_id" a "new"
-         - Imposta "source" a "ai"
-         - Fornisci "ai_creation_data" con "ingredients" e "tags" (es. veloce, economico, forno).
-      6. RISPETTA RIGOROSAMENTE lo schema JSON richiesto. Non aggiungere caratteri extra (come ":" o altri simboli) all'interno dei nomi delle proprietà (es. usa "lunch" e non "lunch:").
-      7. Rispondi in Italiano.
+      4. RISPETTA RIGOROSAMENTE lo schema JSON richiesto. Non aggiungere caratteri extra (come ":" o altri simboli) all'interno dei nomi delle proprietà (es. usa "lunch" e non "lunch:").
+      5. Rispondi in Italiano.
     `;
 
     // 3. LLM Call with Structured Output (Vercel AI SDK)
