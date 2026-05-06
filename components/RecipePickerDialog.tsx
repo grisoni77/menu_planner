@@ -47,6 +47,7 @@ export function RecipePickerDialog({ isOpen, onClose, onSelect, mealRole }: Reci
   useEffect(() => {
     if (!isOpen) {
       setView('search');
+      setSearch("");
       setCreateName("");
       setCreateIngredients("");
       setCreateClasses([]);
