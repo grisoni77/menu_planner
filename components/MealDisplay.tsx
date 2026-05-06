@@ -2,7 +2,7 @@ import { MealPlan, NutritionalClass } from "@/types/weekly-plan";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { checkCoverage } from "@/lib/planner-utils";
+import { checkCoverage, compareMealRecipes } from "@/lib/planner-utils";
 
 interface MealDisplayProps {
   title: string;
@@ -17,12 +17,7 @@ export function MealDisplay({ title, meal, className = "" }: MealDisplayProps) {
     ? { isComplete: true, missingClasses: [] } 
     : checkCoverage(classesCovered);
 
-  // Ordina le ricette: prima i 'main', poi i 'side'
-  const sortedRecipes = [...meal.recipes].sort((a, b) => {
-    if (a.meal_role === 'main' && b.meal_role !== 'main') return -1;
-    if (a.meal_role !== 'main' && b.meal_role === 'main') return 1;
-    return 0;
-  });
+  const sortedRecipes = [...meal.recipes].sort(compareMealRecipes);
 
   return (
     <div className={`space-y-2 ${className}`}>
