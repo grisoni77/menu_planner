@@ -3,6 +3,7 @@ import { Button as UIButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Home, Plus, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { compareMealRecipes } from "@/lib/planner-utils";
 
 interface MealEditorProps {
   title: string;
@@ -59,15 +60,18 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
         </div>
       ) : (
         <ul className="space-y-2">
-          {meal.recipes.map((recipe, idx) => (
-            <li key={idx} className="group relative flex flex-col p-2 bg-slate-50 rounded border border-slate-100">
+          {meal.recipes
+            .map((recipe, originalIndex) => ({ recipe, originalIndex }))
+            .sort((a, b) => compareMealRecipes(a.recipe, b.recipe))
+            .map(({ recipe, originalIndex }) => (
+            <li key={originalIndex} className="group relative flex flex-col p-2 bg-slate-50 rounded border border-slate-100">
               <div className="flex justify-between gap-2">
                 <span className="text-xs font-semibold leading-tight pr-6">{recipe.name}</span>
-                <UIButton 
-                  variant="ghost" 
-                  size="icon" 
+                <UIButton
+                  variant="ghost"
+                  size="icon"
                   className="h-6 w-6 text-slate-400 hover:text-red-500 absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeRecipe(idx)}
+                  onClick={() => removeRecipe(originalIndex)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </UIButton>
@@ -79,12 +83,12 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
                   {recipe.meal_role}
                 </Badge>
                 {recipe.nutritional_classes.map(c => (
-                  <Badge 
-                    key={c} 
-                    variant="secondary" 
+                  <Badge
+                    key={c}
+                    variant="secondary"
                     className={`text-[8px] px-1 py-0 h-3.5 capitalize ${
-                      c === 'veg' ? 'bg-green-100 text-green-700' : 
-                      c === 'carbs' ? 'bg-amber-100 text-amber-700' : 
+                      c === 'veg' ? 'bg-green-100 text-green-700' :
+                      c === 'carbs' ? 'bg-amber-100 text-amber-700' :
                       'bg-red-100 text-red-700'
                     }`}
                   >
@@ -95,17 +99,17 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
             </li>
           ))}
           <div className="flex gap-1">
-            <UIButton 
-              variant="ghost" 
-              size="sm" 
+            <UIButton
+              variant="ghost"
+              size="sm"
               className="flex-1 h-8 border-dashed border-2 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center gap-1 text-[10px]"
               onClick={() => onAddRecipe('main')}
             >
               <Plus className="h-3 w-3" /> Main
             </UIButton>
-            <UIButton 
-              variant="ghost" 
-              size="sm" 
+            <UIButton
+              variant="ghost"
+              size="sm"
               className="flex-1 h-8 border-dashed border-2 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center gap-1 text-[10px]"
               onClick={() => onAddRecipe('side')}
             >
