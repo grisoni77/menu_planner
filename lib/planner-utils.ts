@@ -1,3 +1,5 @@
+import type { MealRecipeItem } from "@/types/weekly-plan";
+
 export const PLANNER_CONFIG = {
   PROMPT_VERSION: 'planner-v2.2',
   REQUIRED_NUTRITIONAL_CLASSES: ['veg', 'carbs', 'protein'] as const,
@@ -43,4 +45,15 @@ export function checkCoverage(nutritionalClasses: string[]): {
     isComplete: missing.length === 0,
     missingClasses: missing,
   };
+}
+
+/**
+ * Ordina i piatti di un pasto: prima i 'main', poi i 'side',
+ * secondario alfabetico (locale italiano).
+ */
+export function compareMealRecipes(a: MealRecipeItem, b: MealRecipeItem): number {
+  if (a.meal_role !== b.meal_role) {
+    return a.meal_role === 'main' ? -1 : 1;
+  }
+  return a.name.localeCompare(b.name, 'it');
 }
