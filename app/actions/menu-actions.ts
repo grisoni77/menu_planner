@@ -364,7 +364,7 @@ export async function saveWeeklyPlanAction(payload: unknown) {
                 recipe.recipe_id = newRecipe.id;
                 aiRecipeMapping.set(normalizedName, newRecipe.id);
               } else {
-                console.error("Errore inserimento ricetta AI:", insertError);
+                console.error("Errore inserimento ricetta:", insertError);
               }
             }
           }

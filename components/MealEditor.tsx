@@ -97,6 +97,9 @@ export function MealEditor({ title, meal, day, mealKey, onChange, onAddRecipe }:
   });
 
   const { active } = useDndContext();
+  const activeData = active?.data.current as { day?: string; mealKey?: 'lunch' | 'dinner' } | undefined;
+  const isSourceMeal = activeData?.day === day && activeData?.mealKey === mealKey;
+  const showDropHighlight = isOver && !isSourceMeal;
   const isDragActiveAndDisabled = !!active && isEatingOutMode;
 
   const toggleEatingOut = () => {
@@ -119,7 +122,7 @@ export function MealEditor({ title, meal, day, mealKey, onChange, onAddRecipe }:
     <div
       ref={setDropRef}
       className={`space-y-2 border rounded-md p-3 bg-white shadow-sm transition-colors ${
-        isOver ? 'ring-2 ring-indigo-300 border-indigo-300' : ''
+        showDropHighlight ? 'ring-2 ring-indigo-300 border-indigo-300' : ''
       } ${isDragActiveAndDisabled ? 'cursor-not-allowed' : ''}`}
     >
       <div className="flex justify-between items-center border-b pb-1 mb-2">
