@@ -340,6 +340,7 @@ export async function saveWeeklyPlanAction(payload: unknown) {
               recipe.recipe_id = existingRecipe.id;
               aiRecipeMapping.set(normalizedName, existingRecipe.id);
             } else {
+              const isAiRecipe = recipe.source === 'ai';
               const { data: newRecipe, error: insertError } = await supabase
                 .from('recipes')
                 .insert({
@@ -348,11 +349,13 @@ export async function saveWeeklyPlanAction(payload: unknown) {
                   nutritional_classes: recipe.nutritional_classes as NutritionalClassDB[],
                   ingredients: recipe.ai_creation_data?.ingredients.map((i: string) => ({ name: i })) || [],
                   tags: recipe.ai_creation_data?.tags || [],
-                  source: 'ai',
-                  generated_at: new Date().toISOString(),
-                  model_name: model_name || 'unknown',
-                  generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION,
-                  user_id: user!.id
+                  source: recipe.source,
+                  ...(isAiRecipe && {
+                    generated_at: new Date().toISOString(),
+                    model_name: model_name || 'unknown',
+                    generation_prompt_version: generation_prompt_version || PLANNER_CONFIG.PROMPT_VERSION,
+                  }),
+                  user_id: user!.id,
                 })
                 .select()
                 .single();
