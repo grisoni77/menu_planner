@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Home, Plus, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { compareMealRecipes } from "@/lib/planner-utils";
-import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { useDroppable, useDraggable, useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import React from "react";
 
@@ -96,6 +96,9 @@ export function MealEditor({ title, meal, day, mealKey, onChange, onAddRecipe }:
     data: { day, mealKey },
   });
 
+  const { active } = useDndContext();
+  const isDragActiveAndDisabled = !!active && isEatingOutMode;
+
   const toggleEatingOut = () => {
     if (isEatingOutMode) {
       // Se siamo in modalità "fuori casa", la disattiviamo
@@ -117,7 +120,7 @@ export function MealEditor({ title, meal, day, mealKey, onChange, onAddRecipe }:
       ref={setDropRef}
       className={`space-y-2 border rounded-md p-3 bg-white shadow-sm transition-colors ${
         isOver ? 'ring-2 ring-indigo-300 border-indigo-300' : ''
-      }`}
+      } ${isDragActiveAndDisabled ? 'cursor-not-allowed' : ''}`}
     >
       <div className="flex justify-between items-center border-b pb-1 mb-2">
         <span className="font-bold text-sm uppercase text-slate-600">{title}</span>

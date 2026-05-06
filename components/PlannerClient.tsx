@@ -16,6 +16,16 @@ import { RecipePickerDialog } from "./RecipePickerDialog";
 import { checkCoverage } from "@/lib/planner-utils";
 import { Badge } from "./ui/badge";
 import { AvailableProvider} from "@/lib/ai/providers";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 
 type SavedPlan = {
   weekly_menu: DayMenu[];
@@ -36,6 +46,15 @@ export default function PlannerClient() {
   const [selectedModel, setSelectedModel] = useState("");
 
   const { draft, setDraft, clearDraft, isReady } = useLocalStorageDraft('menu_planner:draft_weekly_plan:v1');
+
+  const [activeDragRecipe, setActiveDragRecipe] = useState<MealRecipeItem | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor),
+  );
 
   useEffect(() => {
     Promise.all([
@@ -171,6 +190,59 @@ export default function PlannerClient() {
   const validationErrors = getValidationErrors();
   const isValid = validationErrors.length === 0;
 
+  function handleDragStart(event: DragStartEvent) {
+    const data = event.active.data.current as
+      | { day: string; mealKey: 'lunch' | 'dinner'; originalIndex: number; recipe: MealRecipeItem }
+      | undefined;
+    if (data?.recipe) setActiveDragRecipe(data.recipe);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveDragRecipe(null);
+    if (!draft || !event.over) return;
+
+    const source = event.active.data.current as
+      | { day: string; mealKey: 'lunch' | 'dinner'; originalIndex: number; recipe: MealRecipeItem }
+      | undefined;
+    const target = event.over.data.current as
+      | { day: string; mealKey: 'lunch' | 'dinner' }
+      | undefined;
+
+    if (!source || !target) return;
+
+    // No-op: drop sullo stesso pasto.
+    if (source.day === target.day && source.mealKey === target.mealKey) return;
+
+    const newMenu = draft.weekly_menu.map(d => {
+      if (d.day !== source.day && d.day !== target.day) return d;
+
+      const updated: typeof d = { ...d };
+
+      if (d.day === source.day) {
+        const sourceMeal = updated[source.mealKey];
+        const newRecipes = sourceMeal.recipes.filter((_, i) => i !== source.originalIndex);
+        updated[source.mealKey] = {
+          ...sourceMeal,
+          recipes: newRecipes,
+          ingredients_used_from_pantry: sourceMeal.ingredients_used_from_pantry || [],
+        };
+      }
+
+      if (updated.day === target.day) {
+        const targetMeal = updated[target.mealKey];
+        updated[target.mealKey] = {
+          ...targetMeal,
+          recipes: [...targetMeal.recipes, source.recipe],
+          ingredients_used_from_pantry: targetMeal.ingredients_used_from_pantry || [],
+        };
+      }
+
+      return updated;
+    });
+
+    setDraft({ ...draft, weekly_menu: newMenu });
+  }
+
   if (!isReady) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
 
   return (
@@ -265,29 +337,43 @@ export default function PlannerClient() {
             </Card>
           )}
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {draft.weekly_menu.map((day) => (
-              <div key={day.day} className="space-y-4">
-                <h3 className="font-bold text-lg border-b pb-1">{day.day}</h3>
-                <MealEditor
-                  title="Pranzo"
-                  meal={day.lunch}
-                  day={day.day}
-                  mealKey="lunch"
-                  onChange={(m) => updateDraftMeal(day.day, 'lunch', m)}
-                  onAddRecipe={(role) => handleAddRecipe(day.day, 'lunch', role)}
-                />
-                <MealEditor
-                  title="Cena"
-                  meal={day.dinner}
-                  day={day.day}
-                  mealKey="dinner"
-                  onChange={(m) => updateDraftMeal(day.day, 'dinner', m)}
-                  onAddRecipe={(role) => handleAddRecipe(day.day, 'dinner', role)}
-                />
-              </div>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {draft.weekly_menu.map((day) => (
+                <div key={day.day} className="space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-1">{day.day}</h3>
+                  <MealEditor
+                    title="Pranzo"
+                    meal={day.lunch}
+                    day={day.day}
+                    mealKey="lunch"
+                    onChange={(m) => updateDraftMeal(day.day, 'lunch', m)}
+                    onAddRecipe={(role) => handleAddRecipe(day.day, 'lunch', role)}
+                  />
+                  <MealEditor
+                    title="Cena"
+                    meal={day.dinner}
+                    day={day.day}
+                    mealKey="dinner"
+                    onChange={(m) => updateDraftMeal(day.day, 'dinner', m)}
+                    onAddRecipe={(role) => handleAddRecipe(day.day, 'dinner', role)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <DragOverlay>
+              {activeDragRecipe ? (
+                <div className="p-2 bg-white border border-indigo-300 rounded shadow-lg text-xs font-semibold max-w-[220px]">
+                  {activeDragRecipe.name}
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </div>
       )}
 
