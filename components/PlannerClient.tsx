@@ -269,15 +269,19 @@ export default function PlannerClient() {
             {draft.weekly_menu.map((day) => (
               <div key={day.day} className="space-y-4">
                 <h3 className="font-bold text-lg border-b pb-1">{day.day}</h3>
-                <MealEditor 
-                  title="Pranzo" 
-                  meal={day.lunch} 
+                <MealEditor
+                  title="Pranzo"
+                  meal={day.lunch}
+                  day={day.day}
+                  mealKey="lunch"
                   onChange={(m) => updateDraftMeal(day.day, 'lunch', m)}
                   onAddRecipe={(role) => handleAddRecipe(day.day, 'lunch', role)}
                 />
-                <MealEditor 
-                  title="Cena" 
-                  meal={day.dinner} 
+                <MealEditor
+                  title="Cena"
+                  meal={day.dinner}
+                  day={day.day}
+                  mealKey="dinner"
                   onChange={(m) => updateDraftMeal(day.day, 'dinner', m)}
                   onAddRecipe={(role) => handleAddRecipe(day.day, 'dinner', role)}
                 />

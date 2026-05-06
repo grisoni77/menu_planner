@@ -4,16 +4,97 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Home, Plus, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { compareMealRecipes } from "@/lib/planner-utils";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import React from "react";
 
 interface MealEditorProps {
   title: string;
   meal: MealPlan;
+  day: string;
+  mealKey: 'lunch' | 'dinner';
   onChange: (updatedMeal: MealPlan) => void;
   onAddRecipe: (role: 'main' | 'side') => void;
 }
 
-export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorProps) {
+interface DraggableRecipeItemProps {
+  recipe: MealRecipeItem;
+  originalIndex: number;
+  day: string;
+  mealKey: 'lunch' | 'dinner';
+  onRemove: () => void;
+}
+
+function DraggableRecipeItem({ recipe, originalIndex, day, mealKey, onRemove }: DraggableRecipeItemProps) {
+  const dragId = `recipe:${day}:${mealKey}:${originalIndex}`;
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { day, mealKey, originalIndex, recipe },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.4 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+    touchAction: 'none',
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="group relative flex flex-col p-2 bg-slate-50 rounded border border-slate-100"
+    >
+      <div className="flex justify-between gap-2">
+        <span className="text-xs font-semibold leading-tight pr-6">{recipe.name}</span>
+        <UIButton
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-slate-400 hover:text-red-500 absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </UIButton>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-1">
+        <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3.5 uppercase ${
+          recipe.meal_role === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50'
+        }`}>
+          {recipe.meal_role}
+        </Badge>
+        {recipe.nutritional_classes.map(c => (
+          <Badge
+            key={c}
+            variant="secondary"
+            className={`text-[8px] px-1 py-0 h-3.5 capitalize ${
+              c === 'veg' ? 'bg-green-100 text-green-700' :
+              c === 'carbs' ? 'bg-amber-100 text-amber-700' :
+              'bg-red-100 text-red-700'
+            }`}
+          >
+            {c}
+          </Badge>
+        ))}
+      </div>
+    </li>
+  );
+}
+
+export function MealEditor({ title, meal, day, mealKey, onChange, onAddRecipe }: MealEditorProps) {
+  const dropId = `meal:${day}:${mealKey}`;
   const isEatingOutMode = meal.recipes.length === 0 && meal.notes?.toLowerCase().includes("pasto fuori casa");
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: dropId,
+    disabled: isEatingOutMode,
+    data: { day, mealKey },
+  });
 
   const toggleEatingOut = () => {
     if (isEatingOutMode) {
@@ -32,16 +113,21 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
   };
 
   return (
-    <div className="space-y-2 border rounded-md p-3 bg-white shadow-sm">
+    <div
+      ref={setDropRef}
+      className={`space-y-2 border rounded-md p-3 bg-white shadow-sm transition-colors ${
+        isOver ? 'ring-2 ring-indigo-300 border-indigo-300' : ''
+      }`}
+    >
       <div className="flex justify-between items-center border-b pb-1 mb-2">
         <span className="font-bold text-sm uppercase text-slate-600">{title}</span>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <UIButton 
-                variant={isEatingOutMode ? "default" : "outline"} 
-                size="icon" 
-                className="h-7 w-7" 
+              <UIButton
+                variant={isEatingOutMode ? "default" : "outline"}
+                size="icon"
+                className="h-7 w-7"
                 onClick={toggleEatingOut}
               >
                 <Home className="h-4 w-4" />
@@ -64,40 +150,15 @@ export function MealEditor({ title, meal, onChange, onAddRecipe }: MealEditorPro
             .map((recipe, originalIndex) => ({ recipe, originalIndex }))
             .sort((a, b) => compareMealRecipes(a.recipe, b.recipe))
             .map(({ recipe, originalIndex }) => (
-            <li key={originalIndex} className="group relative flex flex-col p-2 bg-slate-50 rounded border border-slate-100">
-              <div className="flex justify-between gap-2">
-                <span className="text-xs font-semibold leading-tight pr-6">{recipe.name}</span>
-                <UIButton
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-slate-400 hover:text-red-500 absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeRecipe(originalIndex)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </UIButton>
-              </div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                 <Badge variant="outline" className={`text-[8px] px-1 py-0 h-3.5 uppercase ${
-                  recipe.meal_role === 'main' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50'
-                }`}>
-                  {recipe.meal_role}
-                </Badge>
-                {recipe.nutritional_classes.map(c => (
-                  <Badge
-                    key={c}
-                    variant="secondary"
-                    className={`text-[8px] px-1 py-0 h-3.5 capitalize ${
-                      c === 'veg' ? 'bg-green-100 text-green-700' :
-                      c === 'carbs' ? 'bg-amber-100 text-amber-700' :
-                      'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {c}
-                  </Badge>
-                ))}
-              </div>
-            </li>
-          ))}
+              <DraggableRecipeItem
+                key={originalIndex}
+                recipe={recipe}
+                originalIndex={originalIndex}
+                day={day}
+                mealKey={mealKey}
+                onRemove={() => removeRecipe(originalIndex)}
+              />
+            ))}
           <div className="flex gap-1">
             <UIButton
               variant="ghost"
