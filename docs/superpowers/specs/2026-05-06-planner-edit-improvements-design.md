@@ -49,7 +49,7 @@ Un pasto in modalità "Pasto fuori casa" (riconosciuto con la stessa euristica u
 
 ### D4. Ordinamento solo a render-time
 
-`MealPlan.recipes` resta un array nell'ordine di inserimento. Il sort vive in `MealEditor.tsx` (e `DayCard.tsx` per la vista read-only). Vantaggi:
+`MealPlan.recipes` resta un array nell'ordine di inserimento. Il sort vive in `MealEditor.tsx` (e `MealDisplay.tsx` per la vista read-only). Vantaggi:
 
 - Zero impatto sul payload salvato in `weekly_plans.menu_data`.
 - Zero impatto sull'output strutturato dell'AI.
@@ -103,7 +103,7 @@ Modifiche localizzate al lato client del planner. Nessuna modifica a schema DB, 
 | `components/PlannerClient.tsx` | Avvolge la griglia settimanale in `<DndContext>`; gestisce `onDragEnd` per mutare il draft. |
 | `components/MealEditor.tsx` | Pasto = drop zone (`useDroppable`); ricetta = item draggable (`useDraggable`); applica sort a render-time. |
 | `components/RecipePickerDialog.tsx` | Aggiunge view "Crea nuova" con form ridotto, gestita localmente con `useState<'search' \| 'create'>`. |
-| `components/DayCard.tsx` | Stesso sort di `MealEditor`, applicato alla vista read-only del piano salvato. |
+| `components/MealDisplay.tsx` | Estende il sort esistente (oggi solo main/side, vedi linee 21-25) per aggiungere il secondario alfabetico. |
 | `app/actions/menu-actions.ts` | In `saveWeeklyPlanAction`, l'insert di una nuova ricetta non hardcoda `source: 'ai'` ma usa `recipe.source`. Campi `generated_at`/`model_name`/`generation_prompt_version` solo se `source === 'ai'`. |
 
 ### Flusso D&D end-to-end
